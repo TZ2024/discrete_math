@@ -29,11 +29,11 @@ def parse_set_input(input_str):
     except: return [1, 2, 3, 4]
 
 def format_set_display(s):
-    """【符号修正】将 [1, 2] 显示为 {1, 2}"""
+    """符号修正：将 [1, 2] 显示为 {1, 2}"""
     return "{" + ", ".join(map(str, s)) + "}"
 
 def format_relation_display(rel):
-    """【符号修正】将 [(1,2)] 显示为 {(1,2)}"""
+    """符号修正：将 [(1,2)] 显示为 {(1,2)}"""
     if not rel: return "{}"
     items = ", ".join([f"({a},{b})" for a, b in rel])
     return f"\\{{ {items} \\}}"
@@ -48,6 +48,9 @@ def generate_relation_data(set_a, set_b, rule):
             elif rule == "Equal (a = b)": is_related = (a == b)
             elif rule == "Divides (a | b)": is_related = (a != 0 and b % a == 0)
             elif rule == "Same Parity (a % 2 == b % 2)": is_related = (a % 2 == b % 2)
+            # 【新功能】Murali 教授建议的例子：a = b - 1 (即 b 是 a 的直接后继)
+            # 这对于展示 Transitive Closure 非常完美，因为 M^1 != M^2
+            elif rule == "Immediate Predecessor (a = b - 1)": is_related = (a == b - 1)
             
             if is_related: relation.append((a, b))
     return relation
@@ -103,7 +106,6 @@ def topological_sort(nodes, edges):
                 if in_degree[dest] == 0:
                     queue.append(dest)
     
-    # 【环检测逻辑】如果排序结果长度不等于节点数，说明有环
     if len(sorted_list) != len(nodes):
         return None 
     return sorted_list
@@ -111,6 +113,7 @@ def topological_sort(nodes, edges):
 # ==========================================
 # 3. 模块渲染函数
 # ==========================================
+
 def render_overview():
     st.header("Chapter 6: Relations as Computational Structures")
     st.markdown("""
@@ -130,7 +133,6 @@ def render_overview():
         * *Concept*: **Task Scheduling** (Topological Sort with Cycle Detection) and **Data Clustering**.
         * *Sections*: 6.7 - 6.9.
     """)
-    
     st.info("👈 Select a module from the tabs above to start experimenting.")
 
 # --- Tab 1: Basics ---
@@ -148,7 +150,8 @@ def render_basics():
             "Less Than (a < b)", 
             "Greater Than (a > b)",
             "Equal (a = b)", 
-            "Same Parity (a % 2 == b % 2)"
+            "Same Parity (a % 2 == b % 2)",
+            "Immediate Predecessor (a = b - 1)"
         ])
     
     if A and B:
@@ -166,7 +169,6 @@ def render_basics():
         with c_db:
             st.markdown("#### 💾 Database Table")
             df = pd.DataFrame(rel, columns=["Attribute_A", "Attribute_B"])
-            # 【关键修改】强制从1开始计数
             df.index += 1
             st.dataframe(df, use_container_width=True)
             st.markdown("""
@@ -179,16 +181,23 @@ def render_basics():
 def render_modeling():
     st.subheader("2. Modeling: Properties, Graphs & Matrices")
     
+    # 强制 V x V
     with st.expander("🕸️ Define Graph Nodes (Set V)", expanded=True):
         c1, c2 = st.columns([1, 2])
-        nodes = parse_set_input(c1.text_input("Vertices V (e.g. 1, 2, 3)", "1, 2, 3, 4"))
+        nodes = parse_set_input(c1.text_input("Vertices V (e.g. 1, 2, 3, 4)", "1, 2, 3, 4"))
+        
+        # 【修改点】加入了新的规则，用于展示传递闭包
         rule = c2.selectbox("Edge Rule (on V × V)", [
+            "Immediate Predecessor (a = b - 1)", # 教授推荐的例子！
             "Divides (a | b)", 
             "Less Than (a < b)", 
             "Greater Than (a > b)",
             "Equal (a = b)",
             "Same Parity (a % 2 == b % 2)"
         ])
+        
+        if rule == "Immediate Predecessor (a = b - 1)":
+            st.info("💡 **Tip:** This relation is **NOT Transitive**. Try increasing the Path Length ($k$) below to see how connections grow ($M^1 \\neq M^2$)!")
     
     edges = generate_relation_data(nodes, nodes, rule)
     
@@ -219,10 +228,16 @@ def render_modeling():
         df_mat = pd.DataFrame(matrix, columns=nodes, index=nodes)
         st.dataframe(df_mat.style.highlight_max(axis=None, color="#d1e7dd"), use_container_width=True)
 
-    st.markdown("#### 🚀 Reachability ($M^k$)")
-    k = st.slider("Path Length (k)", 1, 4, 2)
+    st.markdown("#### 🚀 Reachability & Transitive Closure ($M^k$)")
+    k = st.slider("Path Length (k)", 1, 4, 1) # 默认改为1，方便看变化
     m_pow = matrix_power(matrix, k)
-    st.dataframe(pd.DataFrame(m_pow, index=nodes, columns=nodes).style.highlight_max(axis=None, color='#ffecb3'))
+    
+    c_res, c_exp = st.columns([2, 1])
+    with c_res:
+        st.dataframe(pd.DataFrame(m_pow, index=nodes, columns=nodes).style.highlight_max(axis=None, color='#ffecb3'))
+    with c_exp:
+        if k == 1: st.write("Direct connections (Edges).")
+        else: st.write(f"Paths of length exactly **{k}**. (Friends of Friends...)")
 
 # --- Tab 3: Operations ---
 def render_operations():
@@ -238,7 +253,7 @@ def render_operations():
             "Arr": ["Chicago", "New York", "Detroit", "Miami"],
             "Time": ["08:00", "14:00", "09:30", "12:00"]
         })
-        # 【关键修改】强制从1开始计数，符合数据库/数学直觉
+        # 强制从1开始计数
         df.index += 1
         st.dataframe(df)
         
@@ -246,7 +261,7 @@ def render_operations():
         with c1:
             val = st.selectbox("Select Departure:", ["Detroit", "Chicago", "New York"])
             st.code(f"SELECT * FROM Flights WHERE Dep = '{val}'")
-            filtered_df = df[df["Dep"] == val].copy() # 使用 copy 避免警告
+            filtered_df = df[df["Dep"] == val].copy()
             st.dataframe(filtered_df)
         with c2:
             cols = st.multiselect("Columns:", df.columns, ["Flight", "Dep"])
@@ -264,31 +279,33 @@ def render_applications():
     
     tab_sched, tab_clus = st.tabs(["Scheduler (Partial Order)", "Clustering (Equivalence)"])
     
-    # 1. 调度器 (包含环测试功能)
     with tab_sched:
         st.markdown("**6.7 & 6.8 Partial Orders & DAGs**")
         st.info("Topological Sort: Finding a valid execution order for tasks.")
 
-        # 默认数据
+        # 【修改点】更新默认课程，增加 DiscreteMath，让 Algo 有2个先修课
         default_tasks = {
             "CS1": [], 
             "CS2": ["CS1"], 
             "DataStruct": ["CS2"], 
-            "Algo": ["DataStruct"], 
+            "DiscreteMath": ["CS1"],         # 新增：离散数学 (依赖 CS1)
+            "Algo": ["DataStruct", "DiscreteMath"], # 新增：Algo 现在有2个箭头指向它！
             "WebDev": ["CS1"]
         }
         
-        # 【响应 Murali 的建议】增加环测试
+        # 鲁棒性测试
         st.markdown("#### 🧪 Test Robustness (Murali's Suggestion)")
         inject_cycle = st.checkbox("⚠️ Inject a Cycle (Make 'Algo' a prerequisite for 'CS1')")
         
         if inject_cycle:
-            default_tasks["CS1"] = ["Algo"] # Cycle: CS1->CS2->DataStruct->Algo->CS1
+            default_tasks["CS1"] = ["Algo"] # Cycle Created
             st.error("Cycle Injected! The graph is no longer a DAG.")
 
         c1, c2 = st.columns([1, 2])
         with c1:
             st.json(default_tasks)
+            if not inject_cycle:
+                st.caption("Note: 'Algo' now has 2 prerequisites (DataStruct & DiscreteMath).")
         
         with c2:
             try:
@@ -310,7 +327,6 @@ def render_applications():
             else:
                 st.error("⛔ Error: Cycle Detected! This is not a DAG. Scheduling is impossible.")
 
-    # 2. 聚类器
     with tab_clus:
         st.markdown("**6.9 Equivalence Relations**")
         st.success("Definition: Reflexive, **Symmetric**, and Transitive.")
