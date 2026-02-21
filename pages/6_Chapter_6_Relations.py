@@ -102,20 +102,31 @@ def get_matrix(nodes, edges):
             matrix[idx_map[u]][idx_map[v]] = 1
     return matrix, idx_map
 
+def boolean_matmul(A, B):
+    """Boolean matrix multiplication using OR over AND."""
+    A_b = (A > 0)
+    B_b = (B > 0)
+    return ((A_b.astype(int) @ B_b.astype(int)) > 0).astype(int)
+
+
 def matrix_power(matrix, k):
-    if k <= 1: return (matrix > 0).astype(int)
-    res = matrix.copy()
-    for _ in range(k-1):
-        res = np.dot(res, matrix)
-    return (res > 0).astype(int) 
+    base = (matrix > 0).astype(int)
+    if k <= 1:
+        return base
+    res = base.copy()
+    for _ in range(k - 1):
+        res = boolean_matmul(res, base)
+    return res
+
 
 def compute_transitive_closure(matrix):
     n = len(matrix)
-    closure = (matrix > 0).astype(int)
-    power_k = closure.copy()
+    base = (matrix > 0).astype(int)
+    closure = base.copy()
+    power_k = base.copy()
     for _ in range(1, n):
-        power_k = np.dot(power_k, matrix)
-        closure = np.logical_or(closure, (power_k > 0)).astype(int)
+        power_k = boolean_matmul(power_k, base)
+        closure = np.logical_or(closure, power_k).astype(int)
     return closure
 
 def topological_sort(nodes, edges):
@@ -146,9 +157,6 @@ def compose_relations(R, S):
             for c in S_out.get(b, set()): result.add((a, c))
     return sorted(list(result))
 
-def boolean_matmul(A, B):
-    return (np.dot(A, B) > 0).astype(int)
-
 def witness_middle_nodes(a, c, R, S):
     R_out = {}
     for (x, y) in R: R_out.setdefault(x, set()).add(y)
@@ -157,6 +165,35 @@ def witness_middle_nodes(a, c, R, S):
     bs_from_R = R_out.get(a, set())
     bs_to_c_in_S = S_in.get(c, set())
     return sorted(list(bs_from_R.intersection(bs_to_c_in_S)))
+
+
+def find_witness_path(nodes, edges, start, end):
+    """Return one witness path start -> ... -> end if reachable, else []."""
+    adj = {n: [] for n in nodes}
+    for u, v in edges:
+        if u in adj:
+            adj[u].append(v)
+
+    q = deque([start])
+    prev = {start: None}
+    while q:
+        cur = q.popleft()
+        if cur == end:
+            break
+        for nxt in adj.get(cur, []):
+            if nxt not in prev:
+                prev[nxt] = cur
+                q.append(nxt)
+
+    if end not in prev:
+        return []
+
+    path = []
+    cur = end
+    while cur is not None:
+        path.append(cur)
+        cur = prev[cur]
+    return list(reversed(path))
 
 # ==========================================
 # 3. 模块渲染函数
@@ -308,16 +345,42 @@ def render_modeling():
             else: st.warning("📈 **Growing:** This relation is **NOT Transitive**, so new edges appear as $k$ increases.")
             
             st.divider()
-            st.write("🎯 **Quick Prediction:** Pick two nodes. Is there a path?")
+            st.write("🎯 **Quick Prediction:** Guess first, then reveal the answer.")
             c_p1, c_p2, c_p3 = st.columns([1, 1, 2])
             s_node = c_p1.selectbox("Start", nodes, key="s_node")
             e_node = c_p2.selectbox("End", nodes, index=min(1, len(nodes)-1), key="e_node")
-            if c_p3.button("Check Connectivity"):
+            guess = c_p3.radio("Your guess", ["Reachable", "Not reachable"], horizontal=True)
+            if st.button("Reveal Result"):
                 idx_s, idx_e = nodes.index(s_node), nodes.index(e_node)
-                m2, m_p = matrix_power(matrix, 2), m_plus
-                if m2[idx_s][idx_e] == 1: st.success(f"✅ Yes! {s_node} can reach {e_node} in exactly 2 steps.")
-                elif m_p[idx_s][idx_e] == 1: st.warning(f"⚠️ Not in 2 steps, but it IS reachable eventually (in $M^+$).")
-                else: st.error(f"❌ Not reachable at all (neither in 2 steps nor in $M^+$).")
+                reachable = (m_plus[idx_s][idx_e] == 1)
+                if reachable and guess == "Reachable":
+                    st.success("✅ Correct prediction.")
+                elif (not reachable) and guess == "Not reachable":
+                    st.success("✅ Correct prediction.")
+                else:
+                    st.warning("🧠 Good try—let's inspect why.")
+
+                if matrix_power(matrix, 2)[idx_s][idx_e] == 1:
+                    st.info(f"{s_node} reaches {e_node} in exactly 2 steps.")
+                elif reachable:
+                    st.info(f"{s_node} does not reach {e_node} in 2 steps, but is reachable in $M^+$.")
+                else:
+                    st.error(f"{s_node} cannot reach {e_node} in this graph.")
+
+                if reachable:
+                    path = find_witness_path(nodes, edges, s_node, e_node)
+                    if path:
+                        st.caption("Witness path: " + " → ".join(map(str, path)))
+
+            st.markdown("### 🧪 Micro Quiz")
+            quiz_opts = ["Transitive", "Not transitive"]
+            quiz_ans = st.radio("For the current relation R, which is true?", quiz_opts, horizontal=True, key="quiz_tc")
+            if st.button("Check Quiz", key="check_quiz_tc"):
+                is_trans = props['Transitive']
+                if (is_trans and quiz_ans == "Transitive") or ((not is_trans) and quiz_ans == "Not transitive"):
+                    st.success("Correct. Nice!")
+                else:
+                    st.error("Not quite. Check the property cards above and compare M¹ with M⁺.")
 
 # --- Tab 3: Operations (Smart Display Applied) ---
 def render_operations():
@@ -422,6 +485,7 @@ def render_applications():
             "DiscreteMath": ["CS1"], "Algo": ["DataStruct", "DiscreteMath"], "WebDev": ["CS1"]
         }
         st.markdown("#### 🧪 Test Robustness")
+        st.caption("Cycle mode is only for demonstrating the failure case. Keep OFF for valid scheduling.")
         inject_cycle = st.checkbox("⚠️ Inject a Cycle (Make 'Algo' a prerequisite for 'CS1')")
         if inject_cycle:
             default_tasks["CS1"] = ["Algo"]
@@ -445,6 +509,14 @@ def render_applications():
             sorted_plan = topological_sort(all_nodes, edges)
             if sorted_plan: st.success(f"✅ Recommended Plan: {' → '.join(sorted_plan)}")
             else: st.error("⛔ Error: Cycle Detected! This is not a DAG.")
+
+        st.markdown("### 🧪 Micro Quiz")
+        quiz_topo = st.radio("When does a topological ordering exist?", ["Only when graph is acyclic (DAG)", "For any directed graph"], key="quiz_topo")
+        if st.button("Check Quiz", key="check_quiz_topo"):
+            if quiz_topo == "Only when graph is acyclic (DAG)":
+                st.success("Correct. Topological order exists iff the graph has no directed cycle.")
+            else:
+                st.error("Not correct. A directed cycle makes topological ordering impossible.")
 
     with tab_clus:
         st.markdown("**6.9 Equivalence Relations**")
