@@ -9,8 +9,12 @@ Implemented modules:
 - **Modeling (Graphs & Matrices)**:
   - Relation properties (reflexive, symmetric, anti-symmetric, transitive)
   - Adjacency matrix and digraph view
-  - **Transitive Closure Lab** with `M^k`, `M^+`, and new-edge visualization
-  - Prediction + reveal interaction and witness path display
+  - **Transitive Closure Explorer** with selectable examples:
+    - Current rule on V
+    - Predecessor relation
+    - Flights between cities
+  - `M^k`, `M^+`, optional step-by-step powers (`M¹, M², ...`)
+  - Prediction + reveal interaction, stabilization guess, and add-edge impact check
 - **Operations (Composition)**:
   - Definition-based composition `S ∘ R`
   - Boolean matrix product verification

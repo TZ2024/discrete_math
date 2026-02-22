@@ -307,80 +307,125 @@ def render_modeling():
             st.caption("Matrix entry M[i,j] = 1 exactly when (v_i, v_j) is in R.")
 
     with tab_tc:
-        if len(nodes) < 2:
-            st.info("⚠️ Please enter at least 2 vertices in Set V above to explore $M^k$ and $M^+$.")
-        else:
-            st.markdown("### 🧬 Visualizing Transitive Closure")
-            st.markdown("""<div class='highlight-box'><b>Goal:</b> Understand the difference between <b>Reachability in k steps ($M^k$)</b> and <b>Total Reachability ($M^+$)</b>.<br>Murali's Principle: If a relation is already transitive, $M^1 = M^2$. If not, new connections appear as $k$ grows.</div>""", unsafe_allow_html=True)
-            
-            # --- SMART DISPLAY REUSE ---
-            display_relation_smart(
-                edges, 
-                "Base Relation R (used to build M¹, M^k, and M⁺)", 
-                prefix=r"R =", 
-                max_latex=25
+        st.markdown("### 🧬 Transitive Closure Explorer")
+        st.markdown("Use this lab to compare **exactly k-step reachability** (M^k) vs **overall reachability** (M^+).")
+
+        example_mode = st.radio(
+            "Choose example",
+            ["Current Rule on V", "Predecessor Relation", "Flights Between Cities"],
+            horizontal=True
+        )
+
+        base_nodes = nodes
+        base_edges = edges
+
+        if example_mode == "Predecessor Relation":
+            n_pred = st.slider("Set size n (A={1..n})", 3, 12, min(8, max(3, len(nodes))))
+            base_nodes = list(range(1, n_pred + 1))
+            base_edges = [(a, b) for a in base_nodes for b in base_nodes if a == b - 1]
+            st.caption("R = {(a,b) | a = b - 1}. Then R² captures distance-2 reachability.")
+
+        elif example_mode == "Flights Between Cities":
+            city_pool = ["Detroit", "Chicago", "NewYork", "Boston", "Seattle", "Austin", "Denver", "Miami"]
+            city_count = st.slider("Number of cities", 5, 8, 6)
+            base_nodes = city_pool[:city_count]
+            default_flights = {
+                "Detroit→Chicago": ("Detroit", "Chicago"),
+                "Chicago→NewYork": ("Chicago", "NewYork"),
+                "NewYork→Boston": ("NewYork", "Boston"),
+                "Detroit→Austin": ("Detroit", "Austin"),
+                "Austin→Denver": ("Austin", "Denver"),
+                "Denver→Seattle": ("Denver", "Seattle"),
+                "Miami→Boston": ("Miami", "Boston"),
+            }
+            chosen = st.multiselect(
+                "Direct flights (relation R)",
+                list(default_flights.keys()),
+                default=[k for k in list(default_flights.keys())[:min(5, len(default_flights))]],
             )
-            
-            k = st.slider("Step Length (k)", 1, len(nodes), 1)
-            mk = matrix_power(matrix, k)
-            m_plus = compute_transitive_closure(matrix) 
-            
+            base_edges = [default_flights[k] for k in chosen if default_flights[k][0] in base_nodes and default_flights[k][1] in base_nodes]
+            st.caption("R² means reachable in 2 flights (one layover). M^+ means reachable with any number of flights.")
+
+        base_matrix, _ = get_matrix(base_nodes, base_edges)
+        if len(base_nodes) < 2:
+            st.info("Please provide at least 2 nodes.")
+            return
+
+        display_relation_smart(base_edges, "Base Relation R", prefix=r"R =", max_latex=25)
+
+        show_steps = st.checkbox("Show steps (M¹, M², ..., up to n-1)", value=False)
+        k = st.slider("Power k (show M^k)", 1, max(1, len(base_nodes) - 1), 1)
+
+        if st.button("Compute Transitive Closure", key="compute_tc"):
+            mk = matrix_power(base_matrix, k)
+            m_plus = compute_transitive_closure(base_matrix)
+
             col_mk, col_plus = st.columns(2)
             with col_mk:
-                st.markdown(f"#### 1. Path Length Exactly {k} ($M^{k}$)")
-                st.caption(f"Pairs (a, b) connected by exactly {k} hops.")
-                st.dataframe(pd.DataFrame(mk, index=nodes, columns=nodes).style.applymap(lambda x: 'background-color: #ffe0b2' if x > 0 else ''), use_container_width=True)
+                st.markdown(f"#### M^{k} (exactly {k} steps)")
+                st.dataframe(pd.DataFrame(mk, index=base_nodes, columns=base_nodes), use_container_width=True)
             with col_plus:
-                st.markdown("#### 2. Transitive Closure ($M^+$)")
-                st.caption("Union of all paths ($M^1 \\lor M^2 \\lor \\dots$). Can a reach b eventually?")
-                st.dataframe(pd.DataFrame(m_plus, index=nodes, columns=nodes).style.applymap(lambda x: 'background-color: #c8e6c9' if x > 0 else ''), use_container_width=True)
-            
-            m1 = matrix_power(matrix, 1)
-            new_edges = ((mk == 1) & (m1 == 0)).astype(int)
-            st.markdown(f"#### 3. New Edges Added ($M^{k}$ minus $M^1$)")
-            st.caption("These pairs are **NOT** direct edges in M¹, but become reachable in exactly k steps.")
-            st.dataframe(pd.DataFrame(new_edges, index=nodes, columns=nodes).style.applymap(lambda x: 'background-color: #fff3cd' if x > 0 else ''), use_container_width=True)
+                st.markdown("#### M⁺ (transitive closure)")
+                st.dataframe(pd.DataFrame(m_plus, index=base_nodes, columns=base_nodes), use_container_width=True)
 
-            if props['Transitive']: st.success("✅ **Stabilized:** This relation is **Transitive**, so $M^1$ already captures all reachability.")
-            else: st.warning("📈 **Growing:** This relation is **NOT Transitive**, so new edges appear as $k$ increases.")
-            
-            st.divider()
-            st.write("🎯 **Quick Prediction:** Guess first, then reveal the answer.")
-            c_p1, c_p2, c_p3 = st.columns([1, 1, 2])
-            s_node = c_p1.selectbox("Start", nodes, key="s_node")
-            e_node = c_p2.selectbox("End", nodes, index=min(1, len(nodes)-1), key="e_node")
-            guess = c_p3.radio("Your guess", ["Reachable", "Not reachable"], horizontal=True)
-            if st.button("Reveal Result"):
-                idx_s, idx_e = nodes.index(s_node), nodes.index(e_node)
-                reachable = (m_plus[idx_s][idx_e] == 1)
-                if reachable and guess == "Reachable":
-                    st.success("✅ Correct prediction.")
-                elif (not reachable) and guess == "Not reachable":
-                    st.success("✅ Correct prediction.")
-                else:
-                    st.warning("🧠 Good try—let's inspect why.")
+            if show_steps:
+                st.markdown("#### Step-by-step powers")
+                cur = (base_matrix > 0).astype(int)
+                for i in range(1, len(base_nodes)):
+                    if i > 1:
+                        cur = boolean_matmul(cur, (base_matrix > 0).astype(int))
+                    st.markdown(f"M^{i}")
+                    st.dataframe(pd.DataFrame(cur, index=base_nodes, columns=base_nodes), use_container_width=True)
 
-                if matrix_power(matrix, 2)[idx_s][idx_e] == 1:
-                    st.info(f"{s_node} reaches {e_node} in exactly 2 steps.")
-                elif reachable:
-                    st.info(f"{s_node} does not reach {e_node} in 2 steps, but is reachable in $M^+$.")
-                else:
-                    st.error(f"{s_node} cannot reach {e_node} in this graph.")
+            # interaction prompts
+            st.markdown("### 🎯 Try-it Prompts")
+            p1, p2, p3 = st.columns([1, 1, 2])
+            s_node = p1.selectbox("Start", base_nodes, key="s_node_tc")
+            e_node = p2.selectbox("End", base_nodes, index=min(1, len(base_nodes)-1), key="e_node_tc")
+            guess = p3.radio("Predict reachability in M^+", ["Reachable", "Not reachable"], horizontal=True, key="guess_tc")
 
+            idx_s, idx_e = base_nodes.index(s_node), base_nodes.index(e_node)
+            reachable = (m_plus[idx_s][idx_e] == 1)
+            if st.button("Check Prediction", key="check_pred_tc"):
+                ok = (reachable and guess == "Reachable") or ((not reachable) and guess == "Not reachable")
+                st.success("✅ Correct." if ok else "❌ Not this time.")
                 if reachable:
-                    path = find_witness_path(nodes, edges, s_node, e_node)
+                    path = find_witness_path(base_nodes, base_edges, s_node, e_node)
                     if path:
                         st.caption("Witness path: " + " → ".join(map(str, path)))
 
-            st.markdown("### 🧪 Micro Quiz")
-            quiz_opts = ["Transitive", "Not transitive"]
-            quiz_ans = st.radio("For the current relation R, which is true?", quiz_opts, horizontal=True, key="quiz_tc")
-            if st.button("Check Quiz", key="check_quiz_tc"):
-                is_trans = props['Transitive']
-                if (is_trans and quiz_ans == "Transitive") or ((not is_trans) and quiz_ans == "Not transitive"):
-                    st.success("Correct. Nice!")
+            # stabilization question
+            stabilize_at = None
+            prev = None
+            cur = None
+            for i in range(1, len(base_nodes) + 1):
+                cur = matrix_power(base_matrix, i)
+                if prev is not None and np.array_equal(cur, prev):
+                    stabilize_at = i
+                    break
+                prev = cur.copy()
+
+            if stabilize_at is None:
+                stabilize_at = len(base_nodes)
+            guess_step = st.slider("Guess when powers stabilize", 1, len(base_nodes), 2, key="guess_stable")
+            if st.button("Check Stabilization", key="check_stable"):
+                if guess_step == stabilize_at:
+                    st.success(f"✅ Correct, stabilization starts at k={stabilize_at}.")
                 else:
-                    st.error("Not quite. Check the property cards above and compare M¹ with M⁺.")
+                    st.info(f"Close. For this graph, stabilization starts at k={stabilize_at}.")
+
+            # add-one-edge impact
+            st.markdown("#### Add one extra edge and compare closure")
+            a_col, b_col = st.columns(2)
+            add_u = a_col.selectbox("From", base_nodes, key="add_u")
+            add_v = b_col.selectbox("To", base_nodes, key="add_v")
+            if st.button("Apply extra edge", key="apply_extra"):
+                new_edges = list(set(base_edges + [(add_u, add_v)]))
+                new_m, _ = get_matrix(base_nodes, new_edges)
+                new_plus = compute_transitive_closure(new_m)
+                diff = ((new_plus == 1) & (m_plus == 0)).astype(int)
+                st.dataframe(pd.DataFrame(diff, index=base_nodes, columns=base_nodes), use_container_width=True)
+                st.caption("Cells with 1 are newly reachable pairs after adding the edge.")
 
 # --- Tab 3: Operations (Smart Display Applied) ---
 def render_operations():
