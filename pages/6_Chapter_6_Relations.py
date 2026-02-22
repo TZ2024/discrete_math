@@ -220,6 +220,16 @@ def render_overview():
     """)
     st.info("👈 Select a module from the tabs above to start experimenting.")
 
+    with st.expander("✅ Instructor Validation Checklist"):
+        st.markdown("""
+        - [ ] Relation properties match formal definitions (reflexive/symmetric/antisymmetric/transitive)
+        - [ ] Matrix multiplication is boolean (AND/OR), not arithmetic counting
+        - [ ] `M^k` interpreted as exactly-k-step reachability
+        - [ ] `M^+` interpreted as transitive closure (union of powers)
+        - [ ] Topological order shown only for acyclic directed graphs
+        - [ ] Cycle case correctly blocks topological order
+        """)
+
 # --- Tab 1: Basics ---
 def render_basics():
     st.subheader("1. The Bridge: Sets ↔ Tables")
@@ -309,6 +319,14 @@ def render_modeling():
     with tab_tc:
         st.markdown("### 🧬 Transitive Closure Explorer")
         st.markdown("Use this lab to compare **exactly k-step reachability** (M^k) vs **overall reachability** (M^+).")
+        with st.expander("📘 Theory Notes (for instructor check)"):
+            st.markdown("""
+            - **Adjacency matrix**: `M[i,j]=1` iff there is a direct edge from `v_i` to `v_j`.
+            - **Boolean product**: `(A⊙B)[i,j] = OR_k (A[i,k] AND B[k,j])`.
+            - **Power**: `M^k` encodes reachability by **exactly** `k` steps.
+            - **Transitive closure**: `M^+ = M ∨ M^2 ∨ ... ∨ M^(n-1)` for finite `n` nodes.
+            - We compute closure with iterative boolean powers (equivalent to reachability semantics).
+            """)
 
         example_mode = st.radio(
             "Choose example",
@@ -496,8 +514,11 @@ def render_operations():
                 st.caption("Boolean Product: (M(R) · M(S)) > 0")
                 st.dataframe(pd.DataFrame(M_SoR_from_mats, index=V, columns=V), use_container_width=True)
 
-            if np.array_equal(M_SoR_rel, M_SoR_from_mats): st.success("✅ Match: Definition-based S∘R equals booleanized matrix product M(R)·M(S).")
-            else: st.warning("⚠️ Mismatch detected. Check definitions.")
+            if np.array_equal(M_SoR_rel, M_SoR_from_mats):
+                st.success("✅ Match: Definition-based S∘R equals booleanized matrix product M(R)·M(S).")
+                st.caption("Why: composition requires an intermediate y with xRy and ySz, exactly what boolean multiplication aggregates.")
+            else:
+                st.warning("⚠️ Mismatch detected. Check definitions.")
 
             st.divider()
             st.markdown("### 🔎 Explain the Middle Node y (Witness)")
