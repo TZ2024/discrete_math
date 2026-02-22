@@ -525,35 +525,90 @@ def render_applications():
     with tab_sched:
         st.markdown("**6.7 & 6.8 Partial Orders & DAGs**")
         st.info("Topological Sort: Finding a valid execution order for tasks.")
-        default_tasks = {
-            "CS1": [], "CS2": ["CS1"], "DataStruct": ["CS2"], 
-            "DiscreteMath": ["CS1"], "Algo": ["DataStruct", "DiscreteMath"], "WebDev": ["CS1"]
-        }
-        st.markdown("#### 🧪 Test Robustness")
-        st.caption("Cycle mode is only for demonstrating the failure case. Keep OFF for valid scheduling.")
-        inject_cycle = st.checkbox("⚠️ Inject a Cycle (Make 'Algo' a prerequisite for 'CS1')")
-        if inject_cycle:
-            default_tasks["CS1"] = ["Algo"]
-            st.error("Cycle Injected! The graph is no longer a DAG.")
+
+        default_nodes = ["CS1", "CS2", "DataStruct", "DiscreteMath", "Algo", "WebDev"]
+        default_edges = [
+            ("CS1", "CS2"),
+            ("CS2", "DataStruct"),
+            ("CS1", "DiscreteMath"),
+            ("DataStruct", "Algo"),
+            ("DiscreteMath", "Algo"),
+            ("CS1", "WebDev"),
+        ]
+
+        if "sched_nodes" not in st.session_state:
+            st.session_state.sched_nodes = default_nodes.copy()
+        if "sched_edges" not in st.session_state:
+            st.session_state.sched_edges = default_edges.copy()
+        if "sched_history" not in st.session_state:
+            st.session_state.sched_history = []
+
+        nodes_now = st.session_state.sched_nodes
+        edges_now = st.session_state.sched_edges
+
+        st.markdown("#### Graph Controls")
+        c_add1, c_add2, c_add3 = st.columns([1, 1, 1])
+        from_node = c_add1.selectbox("Add edge: from", nodes_now, key="edge_from")
+        to_node = c_add2.selectbox("to", nodes_now, index=min(1, len(nodes_now)-1), key="edge_to")
+
+        def has_cycle(nodes, edges):
+            return topological_sort(nodes, edges) is None
+
+        if c_add3.button("Add edge", key="btn_add_edge"):
+            candidate = (from_node, to_node)
+            if candidate in edges_now:
+                st.warning("Edge already exists.")
+            else:
+                trial = edges_now + [candidate]
+                if has_cycle(nodes_now, trial):
+                    st.error("Cycle detected, no topological order exists. Edge not added.")
+                else:
+                    st.session_state.sched_history.append(edges_now.copy())
+                    st.session_state.sched_edges = trial
+                    st.success(f"Added edge: {from_node} → {to_node}")
+
+        c_act1, c_act2 = st.columns(2)
+        if c_act1.button("Undo last edge", key="btn_undo"):
+            if st.session_state.sched_history:
+                st.session_state.sched_edges = st.session_state.sched_history.pop()
+                st.info("Undid last change.")
+            else:
+                st.warning("Nothing to undo.")
+
+        if c_act2.button("Reset to default graph", key="btn_reset"):
+            st.session_state.sched_edges = default_edges.copy()
+            st.session_state.sched_history = []
+            st.success("Reset to default acyclic graph.")
+
+        edges_now = st.session_state.sched_edges
+
         c1, c2 = st.columns([1, 2])
         with c1:
-            st.json(default_tasks)
-            if not inject_cycle: st.caption("Note: 'Algo' now has 2 prerequisites.")
+            prereq = {n: [] for n in nodes_now}
+            for u, v in edges_now:
+                prereq[v].append(u)
+            st.json(prereq)
+            st.caption("Algorithms has two prerequisites by default: DataStruct and DiscreteMath.")
+
         with c2:
             try:
                 g = graphviz.Digraph(); g.attr(rankdir='LR')
-                edges = []
-                all_nodes = list(default_tasks.keys())
-                for course, prereqs in default_tasks.items():
-                    g.node(course, style='filled', fillcolor='#fff3cd')
-                    for p in prereqs:
-                        g.edge(p, course); edges.append((p, course))
+                for n in nodes_now:
+                    color = '#ffeeba' if n == 'Algo' else '#fff3cd'
+                    g.node(n, style='filled', fillcolor=color)
+                for u, v in edges_now:
+                    g.edge(u, v)
                 st.graphviz_chart(g)
-            except: pass
-        if st.button("🚀 Run Topological Sort"):
-            sorted_plan = topological_sort(all_nodes, edges)
-            if sorted_plan: st.success(f"✅ Recommended Plan: {' → '.join(sorted_plan)}")
-            else: st.error("⛔ Error: Cycle Detected! This is not a DAG.")
+            except:
+                pass
+
+        if st.button("🚀 Run Topological Sort", key="run_topo"):
+            sorted_plan = topological_sort(nodes_now, edges_now)
+            if sorted_plan:
+                st.success(f"✅ One valid topological order: {' → '.join(sorted_plan)}")
+                st.caption("Note: there may be multiple valid answers.")
+            else:
+                st.error("⛔ Cycle detected, no topological order exists.")
 
         st.markdown("### 🧪 Micro Quiz")
         quiz_topo = st.radio("When does a topological ordering exist?", ["Only when graph is acyclic (DAG)", "For any directed graph"], key="quiz_topo")
