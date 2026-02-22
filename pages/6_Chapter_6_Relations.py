@@ -253,7 +253,7 @@ def render_basics():
             st.markdown("""<div class='highlight-box'>Math <span class='math-tag'>Ordered Pair (a,b)</span> = DB <span class='db-tag'>Tuple (Row)</span></div>""", unsafe_allow_html=True)
             st.markdown("### 🧪 Quick Check")
             q1 = st.radio(
-                "In the adjacency matrix of relation R, what does entry M[i,j]=1 mean?",
+                "In relation matrix M, what does M[i,j]=1 mean? (v_i=row node, v_j=column node)",
                 ["There is a direct relation from v_i to v_j", "v_i equals v_j", "v_j must be larger than v_i"],
                 key="qc_basics_1"
             )
@@ -376,75 +376,74 @@ def render_modeling():
         show_steps = st.checkbox("Show steps (M¹, M², ..., up to n-1)", value=False)
         k = st.slider("Power k (show M^k)", 1, max(1, len(base_nodes) - 1), 1)
 
-        if st.button("Compute Transitive Closure", key="compute_tc"):
-            mk = matrix_power(base_matrix, k)
-            m_plus = compute_transitive_closure(base_matrix)
+        mk = matrix_power(base_matrix, k)
+        m_plus = compute_transitive_closure(base_matrix)
 
-            col_mk, col_plus = st.columns(2)
-            with col_mk:
-                st.markdown(f"#### M^{k} (exactly {k} steps)")
-                st.dataframe(pd.DataFrame(mk, index=base_nodes, columns=base_nodes), use_container_width=True)
-            with col_plus:
-                st.markdown("#### M⁺ (transitive closure)")
-                st.dataframe(pd.DataFrame(m_plus, index=base_nodes, columns=base_nodes), use_container_width=True)
+        col_mk, col_plus = st.columns(2)
+        with col_mk:
+            st.markdown(f"#### M^{k} (exactly {k} steps)")
+            st.dataframe(pd.DataFrame(mk, index=base_nodes, columns=base_nodes), use_container_width=True)
+        with col_plus:
+            st.markdown("#### M⁺ (transitive closure)")
+            st.dataframe(pd.DataFrame(m_plus, index=base_nodes, columns=base_nodes), use_container_width=True)
 
-            if show_steps:
-                st.markdown("#### Step-by-step powers")
-                cur = (base_matrix > 0).astype(int)
-                for i in range(1, len(base_nodes)):
-                    if i > 1:
-                        cur = boolean_matmul(cur, (base_matrix > 0).astype(int))
-                    st.markdown(f"M^{i}")
-                    st.dataframe(pd.DataFrame(cur, index=base_nodes, columns=base_nodes), use_container_width=True)
+        if show_steps:
+            st.markdown("#### Step-by-step powers")
+            cur = (base_matrix > 0).astype(int)
+            for i in range(1, len(base_nodes)):
+                if i > 1:
+                    cur = boolean_matmul(cur, (base_matrix > 0).astype(int))
+                st.markdown(f"M^{i}")
+                st.dataframe(pd.DataFrame(cur, index=base_nodes, columns=base_nodes), use_container_width=True)
 
-            # interaction prompts
-            st.markdown("### 🎯 Try-it Prompts")
-            p1, p2, p3 = st.columns([1, 1, 2])
-            s_node = p1.selectbox("Start", base_nodes, key="s_node_tc")
-            e_node = p2.selectbox("End", base_nodes, index=min(1, len(base_nodes)-1), key="e_node_tc")
-            guess = p3.radio("Predict reachability in M^+", ["Reachable", "Not reachable"], horizontal=True, key="guess_tc")
+        # interaction prompts
+        st.markdown("### 🎯 Try-it Prompts")
+        p1, p2, p3 = st.columns([1, 1, 2])
+        s_node = p1.selectbox("Start", base_nodes, key="s_node_tc")
+        e_node = p2.selectbox("End", base_nodes, index=min(1, len(base_nodes)-1), key="e_node_tc")
+        guess = p3.radio("Predict reachability in M^+", ["Reachable", "Not reachable"], horizontal=True, key="guess_tc")
 
-            idx_s, idx_e = base_nodes.index(s_node), base_nodes.index(e_node)
-            reachable = (m_plus[idx_s][idx_e] == 1)
-            if st.button("Check Prediction", key="check_pred_tc"):
-                ok = (reachable and guess == "Reachable") or ((not reachable) and guess == "Not reachable")
-                st.success("✅ Correct." if ok else "❌ Not this time.")
-                if reachable:
-                    path = find_witness_path(base_nodes, base_edges, s_node, e_node)
-                    if path:
-                        st.caption("Witness path: " + " → ".join(map(str, path)))
+        idx_s, idx_e = base_nodes.index(s_node), base_nodes.index(e_node)
+        reachable = (m_plus[idx_s][idx_e] == 1)
+        if st.button("Check Prediction", key="check_pred_tc"):
+            ok = (reachable and guess == "Reachable") or ((not reachable) and guess == "Not reachable")
+            st.success("✅ Correct." if ok else "❌ Not this time.")
+            if reachable:
+                path = find_witness_path(base_nodes, base_edges, s_node, e_node)
+                if path:
+                    st.caption("Witness path: " + " → ".join(map(str, path)))
 
-            # stabilization question (for closure union C_k = M ∨ ... ∨ M^k)
-            closure_prev = np.zeros_like(base_matrix)
-            closure_cur = np.zeros_like(base_matrix)
-            stabilize_at = len(base_nodes)
-            for i in range(1, len(base_nodes) + 1):
-                mk_i = matrix_power(base_matrix, i)
-                closure_cur = np.logical_or(closure_prev, mk_i).astype(int)
-                if np.array_equal(closure_cur, closure_prev):
-                    stabilize_at = i
-                    break
-                closure_prev = closure_cur.copy()
+        # stabilization question (for closure union C_k = M ∨ ... ∨ M^k)
+        closure_prev = np.zeros_like(base_matrix)
+        closure_cur = np.zeros_like(base_matrix)
+        stabilize_at = len(base_nodes)
+        for i in range(1, len(base_nodes) + 1):
+            mk_i = matrix_power(base_matrix, i)
+            closure_cur = np.logical_or(closure_prev, mk_i).astype(int)
+            if np.array_equal(closure_cur, closure_prev):
+                stabilize_at = i
+                break
+            closure_prev = closure_cur.copy()
 
-            guess_step = st.slider("Guess when closure C_k stabilizes", 1, len(base_nodes), 2, key="guess_stable")
-            if st.button("Check Stabilization", key="check_stable"):
-                if guess_step == stabilize_at:
-                    st.success(f"✅ Correct, closure stabilization starts at k={stabilize_at}.")
-                else:
-                    st.info(f"Close. For this graph, closure stabilization starts at k={stabilize_at}.")
+        guess_step = st.slider("Guess when closure C_k stabilizes", 1, len(base_nodes), 2, key="guess_stable")
+        if st.button("Check Stabilization", key="check_stable"):
+            if guess_step == stabilize_at:
+                st.success(f"✅ Correct, closure stabilization starts at k={stabilize_at}.")
+            else:
+                st.info(f"Close. For this graph, closure stabilization starts at k={stabilize_at}.")
 
-            # add-one-edge impact
-            st.markdown("#### Add one extra edge and compare closure")
-            a_col, b_col = st.columns(2)
-            add_u = a_col.selectbox("From", base_nodes, key="add_u")
-            add_v = b_col.selectbox("To", base_nodes, key="add_v")
-            if st.button("Apply extra edge", key="apply_extra"):
-                new_edges = list(set(base_edges + [(add_u, add_v)]))
-                new_m, _ = get_matrix(base_nodes, new_edges)
-                new_plus = compute_transitive_closure(new_m)
-                diff = ((new_plus == 1) & (m_plus == 0)).astype(int)
-                st.dataframe(pd.DataFrame(diff, index=base_nodes, columns=base_nodes), use_container_width=True)
-                st.caption("Cells with 1 are newly reachable pairs after adding the edge.")
+        # add-one-edge impact
+        st.markdown("#### Add one extra edge and compare closure")
+        a_col, b_col = st.columns(2)
+        add_u = a_col.selectbox("From", base_nodes, key="add_u")
+        add_v = b_col.selectbox("To", base_nodes, key="add_v")
+        if st.button("Apply extra edge", key="apply_extra"):
+            new_edges = list(set(base_edges + [(add_u, add_v)]))
+            new_m, _ = get_matrix(base_nodes, new_edges)
+            new_plus = compute_transitive_closure(new_m)
+            diff = ((new_plus == 1) & (m_plus == 0)).astype(int)
+            st.dataframe(pd.DataFrame(diff, index=base_nodes, columns=base_nodes), use_container_width=True)
+            st.caption("Cells with 1 are newly reachable pairs after adding the edge.")
 
 # --- Tab 3: Operations (Smart Display Applied) ---
 def render_operations():
@@ -466,6 +465,22 @@ def render_operations():
         with c2:
             cols = st.multiselect("Columns:", df.columns, ["Flight", "Dep"])
             if cols: st.code(f"SELECT {', '.join(cols)} FROM Flights"); st.dataframe(df[cols])
+
+        st.markdown("### 🧪 Quick Check")
+        q_nary = st.radio(
+            "In this table, which statement is correct?",
+            [
+                "Each row is one tuple in an N-ary relation",
+                "Each column is one tuple",
+                "Only 2-column tables are relations"
+            ],
+            key="qc_nary"
+        )
+        if st.button("Check", key="check_qc_nary"):
+            if q_nary == "Each row is one tuple in an N-ary relation":
+                st.success("Correct. A relation instance is represented by tuples (rows).")
+            else:
+                st.error("Not correct. In relational modeling, rows are tuples.")
 
     with tab2:
         st.subheader("6.4 Composition: Friends of Friends")
@@ -668,6 +683,22 @@ def render_applications():
                 clusters[rem].append(n)
             for rem, cluster in sorted(clusters.items()):
                 st.info(f"**Class [{rem}]:** " + "{" + ", ".join(map(str, cluster)) + "}")
+
+        st.markdown("### 🧪 Quick Check")
+        q_eq = st.radio(
+            "For relation x ~ y iff x mod n = y mod n, which is true?",
+            [
+                "It partitions the set into equivalence classes",
+                "It is never reflexive",
+                "It cannot be symmetric"
+            ],
+            key="qc_eq"
+        )
+        if st.button("Check", key="check_qc_eq"):
+            if q_eq == "It partitions the set into equivalence classes":
+                st.success("Correct. Modulo-equivalence groups elements into disjoint classes.")
+            else:
+                st.error("Not correct. This relation is reflexive, symmetric, and transitive.")
 
 # ==========================================
 # 4. 主程序入口
