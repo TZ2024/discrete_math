@@ -58,7 +58,7 @@ def display_relation_smart(rel, label, prefix=None, max_latex=25):
         # Create a clean DataFrame for large relations
         df = pd.DataFrame(rel, columns=["a", "b"])
         df.index += 1
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, width="stretch")
         st.caption(f"Displayed as a table because there are {len(rel)} pairs.")
 
 def generate_relation_data(set_a, set_b, rule):
@@ -248,7 +248,7 @@ def render_basics():
         with c_db:
             st.markdown("#### 💾 Database Table")
             df = pd.DataFrame(rel, columns=["Attribute_A", "Attribute_B"]); df.index += 1
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
             st.markdown("""<div class='highlight-box'>Math <span class='math-tag'>Ordered Pair (a,b)</span> = DB <span class='db-tag'>Tuple (Row)</span></div>""", unsafe_allow_html=True)
 
 # --- Tab 2: Modeling (Smart Display Applied) ---
@@ -302,7 +302,7 @@ def render_modeling():
         with col2:
             st.markdown("#### 🔢 Adjacency Matrix")
             df_mat = pd.DataFrame(matrix, columns=nodes, index=nodes)
-            st.dataframe(df_mat.style.highlight_max(axis=None, color="#d1e7dd"), use_container_width=True)
+            st.dataframe(df_mat.style.highlight_max(axis=None, color="#d1e7dd"), width="stretch")
             # Pedagogical mapping note
             st.caption("Matrix entry M[i,j] = 1 exactly when (v_i, v_j) is in R.")
 
@@ -329,17 +329,17 @@ def render_modeling():
             with col_mk:
                 st.markdown(f"#### 1. Path Length Exactly {k} ($M^{k}$)")
                 st.caption(f"Pairs (a, b) connected by exactly {k} hops.")
-                st.dataframe(pd.DataFrame(mk, index=nodes, columns=nodes).style.applymap(lambda x: 'background-color: #ffe0b2' if x > 0 else ''), use_container_width=True)
+                st.dataframe(pd.DataFrame(mk, index=nodes, columns=nodes).style.applymap(lambda x: 'background-color: #ffe0b2' if x > 0 else ''), width="stretch")
             with col_plus:
                 st.markdown("#### 2. Transitive Closure ($M^+$)")
                 st.caption("Union of all paths ($M^1 \\lor M^2 \\lor \\dots$). Can a reach b eventually?")
-                st.dataframe(pd.DataFrame(m_plus, index=nodes, columns=nodes).style.applymap(lambda x: 'background-color: #c8e6c9' if x > 0 else ''), use_container_width=True)
+                st.dataframe(pd.DataFrame(m_plus, index=nodes, columns=nodes).style.applymap(lambda x: 'background-color: #c8e6c9' if x > 0 else ''), width="stretch")
 
             m1 = matrix_power(matrix, 1)
             new_edges = ((mk == 1) & (m1 == 0)).astype(int)
             st.markdown(f"#### 3. New Edges Added ($M^{k}$ minus $M^1$)")
             st.caption("These pairs are **NOT** direct edges in M¹, but become reachable in exactly k steps.")
-            st.dataframe(pd.DataFrame(new_edges, index=nodes, columns=nodes).style.applymap(lambda x: 'background-color: #fff3cd' if x > 0 else ''), use_container_width=True)
+            st.dataframe(pd.DataFrame(new_edges, index=nodes, columns=nodes).style.applymap(lambda x: 'background-color: #fff3cd' if x > 0 else ''), width="stretch")
 
             if props['Transitive']: st.success("✅ **Stabilized:** This relation is **Transitive**, so $M^1$ already captures all reachability.")
             else: st.warning("📈 **Growing:** This relation is **NOT Transitive**, so new edges appear as $k$ increases.")
@@ -443,14 +443,14 @@ def render_operations():
             col_m1, col_m2, col_m3 = st.columns(3)
             with col_m1:
                 st.markdown("#### M(R)")
-                st.dataframe(pd.DataFrame(M_R, index=V, columns=V), use_container_width=True)
+                st.dataframe(pd.DataFrame(M_R, index=V, columns=V), width="stretch")
             with col_m2:
                 st.markdown("#### M(S)")
-                st.dataframe(pd.DataFrame(M_S, index=V, columns=V), use_container_width=True)
+                st.dataframe(pd.DataFrame(M_S, index=V, columns=V), width="stretch")
             with col_m3:
                 st.markdown("#### M(S ∘ R)")
                 st.caption("Boolean Product: (M(R) · M(S)) > 0")
-                st.dataframe(pd.DataFrame(M_SoR_from_mats, index=V, columns=V), use_container_width=True)
+                st.dataframe(pd.DataFrame(M_SoR_from_mats, index=V, columns=V), width="stretch")
 
             if np.array_equal(M_SoR_rel, M_SoR_from_mats): st.success("✅ Match: Definition-based S∘R equals booleanized matrix product M(R)·M(S).")
             else: st.warning("⚠️ Mismatch detected. Check definitions.")
@@ -467,7 +467,7 @@ def render_operations():
                 st.write(f"**Middle node(s) y that make it work:** {', '.join(map(str, ys))}")
                 support_rows = []
                 for y in ys: support_rows.append({"(x,y) in R": f"({x_choice},{y})", "(y,z) in S": f"({y},{z_choice})"})
-                st.dataframe(pd.DataFrame(support_rows), use_container_width=True)
+                st.dataframe(pd.DataFrame(support_rows), width="stretch")
             else:
                 if (x_choice, z_choice) in set(SoR): st.warning("It seems reachable, but no witness y was found.")
                 else: st.error(f"❌ No. ({x_choice}, {z_choice}) is NOT in S ∘ R.")

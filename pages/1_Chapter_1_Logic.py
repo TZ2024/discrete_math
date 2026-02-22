@@ -181,7 +181,7 @@ def render_basics():
             st.markdown("#### 💾 Database Table")
             df = pd.DataFrame(rel, columns=["Attribute_A", "Attribute_B"])
             df.index += 1
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
             st.markdown("""
             <div class='highlight-box'>
             Math <span class='math-tag'>Ordered Pair (a,b)</span> = DB <span class='db-tag'>Tuple (Row)</span>
@@ -237,7 +237,7 @@ def render_modeling():
         st.markdown("#### 🔢 Adjacency Matrix")
         matrix, idx_map = get_matrix(nodes, edges)
         df_mat = pd.DataFrame(matrix, columns=nodes, index=nodes)
-        st.dataframe(df_mat.style.highlight_max(axis=None, color="#d1e7dd"), use_container_width=True)
+        st.dataframe(df_mat.style.highlight_max(axis=None, color="#d1e7dd"), width="stretch")
 
     st.markdown("#### 🚀 Reachability & Transitive Closure ($M^k$)")
     st.caption(
@@ -258,7 +258,7 @@ def render_modeling():
         st.dataframe(
             pd.DataFrame(m_k, index=nodes, columns=nodes)
               .style.highlight_max(axis=None, color='#ffecb3'),
-            use_container_width=True
+            width="stretch"
         )
         if k == 1:
             st.write("This is the **adjacency matrix**. 1 means a direct edge.")
@@ -269,7 +269,7 @@ def render_modeling():
         st.dataframe(
             pd.DataFrame(m_plus, index=nodes, columns=nodes)
               .style.highlight_max(axis=None, color='#d1e7dd'),
-            use_container_width=True
+            width="stretch"
         )
 
         # Explain what changed
