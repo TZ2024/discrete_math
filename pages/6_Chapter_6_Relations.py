@@ -310,7 +310,7 @@ def render_modeling():
     with tab_tc:
         st.markdown("### 🧬 Transitive Closure Explorer")
         st.markdown("Use this lab to compare **exactly k-step reachability** (M^k) vs **overall reachability** (M^+).")
-        with st.expander("📘 Theory Notes (for instructor check)"):
+        with st.expander("📘 Theory Notes"):
             st.markdown("""
             - **Adjacency matrix**: `M[i,j]=1` iff there is a direct edge from `v_i` to `v_j`.
             - **Boolean product**: `(A⊙B)[i,j] = OR_k (A[i,k] AND B[k,j])`.
