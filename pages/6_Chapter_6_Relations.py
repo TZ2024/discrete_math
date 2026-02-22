@@ -394,25 +394,24 @@ def render_modeling():
                     if path:
                         st.caption("Witness path: " + " → ".join(map(str, path)))
 
-            # stabilization question
-            stabilize_at = None
-            prev = None
-            cur = None
+            # stabilization question (for closure union C_k = M ∨ ... ∨ M^k)
+            closure_prev = np.zeros_like(base_matrix)
+            closure_cur = np.zeros_like(base_matrix)
+            stabilize_at = len(base_nodes)
             for i in range(1, len(base_nodes) + 1):
-                cur = matrix_power(base_matrix, i)
-                if prev is not None and np.array_equal(cur, prev):
+                mk_i = matrix_power(base_matrix, i)
+                closure_cur = np.logical_or(closure_prev, mk_i).astype(int)
+                if np.array_equal(closure_cur, closure_prev):
                     stabilize_at = i
                     break
-                prev = cur.copy()
+                closure_prev = closure_cur.copy()
 
-            if stabilize_at is None:
-                stabilize_at = len(base_nodes)
-            guess_step = st.slider("Guess when powers stabilize", 1, len(base_nodes), 2, key="guess_stable")
+            guess_step = st.slider("Guess when closure C_k stabilizes", 1, len(base_nodes), 2, key="guess_stable")
             if st.button("Check Stabilization", key="check_stable"):
                 if guess_step == stabilize_at:
-                    st.success(f"✅ Correct, stabilization starts at k={stabilize_at}.")
+                    st.success(f"✅ Correct, closure stabilization starts at k={stabilize_at}.")
                 else:
-                    st.info(f"Close. For this graph, stabilization starts at k={stabilize_at}.")
+                    st.info(f"Close. For this graph, closure stabilization starts at k={stabilize_at}.")
 
             # add-one-edge impact
             st.markdown("#### Add one extra edge and compare closure")
