@@ -251,6 +251,17 @@ def render_basics():
             df = pd.DataFrame(rel, columns=["Attribute_A", "Attribute_B"]); df.index += 1
             st.dataframe(df, use_container_width=True)
             st.markdown("""<div class='highlight-box'>Math <span class='math-tag'>Ordered Pair (a,b)</span> = DB <span class='db-tag'>Tuple (Row)</span></div>""", unsafe_allow_html=True)
+            st.markdown("### 🧪 Quick Check")
+            q1 = st.radio(
+                "In the adjacency matrix of relation R, what does entry M[i,j]=1 mean?",
+                ["There is a direct relation from v_i to v_j", "v_i equals v_j", "v_j must be larger than v_i"],
+                key="qc_basics_1"
+            )
+            if st.button("Check", key="check_qc_basics_1"):
+                if q1 == "There is a direct relation from v_i to v_j":
+                    st.success("Correct. M[i,j]=1 encodes that ordered pair (v_i, v_j) is in R.")
+                else:
+                    st.error("Not quite. M[i,j]=1 means (v_i, v_j) belongs to relation R.")
 
 # --- Tab 2: Modeling (Smart Display Applied) ---
 def render_modeling():
@@ -527,6 +538,18 @@ def render_operations():
             else:
                 if (x_choice, z_choice) in set(SoR): st.warning("It seems reachable, but no witness y was found.")
                 else: st.error(f"❌ No. ({x_choice}, {z_choice}) is NOT in S ∘ R.")
+
+            st.markdown("### 🧪 Quick Check")
+            q_comp = st.radio(
+                "For (x,z) to be in S∘R, which condition is required?",
+                ["There exists y with xRy and ySz", "xSz and zRy", "xRy only"],
+                key="qc_comp"
+            )
+            if st.button("Check", key="check_qc_comp"):
+                if q_comp == "There exists y with xRy and ySz":
+                    st.success("Correct. Composition needs an intermediate witness y.")
+                else:
+                    st.error("Not correct. Need some y such that xRy and ySz.")
 
 # --- Tab 4: Applications (Scheduler with Discrete Math) ---
 def render_applications():
