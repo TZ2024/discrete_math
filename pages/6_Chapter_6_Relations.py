@@ -220,15 +220,6 @@ def render_overview():
     """)
     st.info("👈 Select a module from the tabs above to start experimenting.")
 
-    with st.expander("✅ Instructor Validation Checklist"):
-        st.markdown("""
-        - [ ] Relation properties match formal definitions (reflexive/symmetric/antisymmetric/transitive)
-        - [ ] Matrix multiplication is boolean (AND/OR), not arithmetic counting
-        - [ ] `M^k` interpreted as exactly-k-step reachability
-        - [ ] `M^+` interpreted as transitive closure (union of powers)
-        - [ ] Topological order shown only for acyclic directed graphs
-        - [ ] Cycle case correctly blocks topological order
-        """)
 
 # --- Tab 1: Basics ---
 def render_basics():
