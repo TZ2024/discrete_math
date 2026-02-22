@@ -58,7 +58,7 @@ def display_relation_smart(rel, label, prefix=None, max_latex=25):
         # Create a clean DataFrame for large relations
         df = pd.DataFrame(rel, columns=["a", "b"])
         df.index += 1
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, width="stretch")
         st.caption(f"Displayed as a table because there are {len(rel)} pairs.")
 
 def generate_relation_data(set_a, set_b, rule):
@@ -228,8 +228,8 @@ def render_basics():
     
     with st.expander("🛠️ Define Relation (Set A & Set B)", expanded=True):
         c1, c2, c3 = st.columns([1,1,2])
-        A = parse_set_input(c1.text_input("Set A Input (e.g. 1, 2, 3)", "1, 2, 3, 4"))
-        B = parse_set_input(c2.text_input("Set B Input (e.g. 1, 2, 3)", "1, 2, 3, 4"))
+        A = parse_set_input(c1.text_input("Set A elements (e.g. 1, 2, 3)", "1, 2, 3, 4"))
+        B = parse_set_input(c2.text_input("Set B elements (e.g. 1, 2, 3)", "1, 2, 3, 4"))
         
         rule = c3.selectbox("Relation Rule", [
             "Divides (a | b)", "Less Than (a < b)", 
@@ -249,11 +249,11 @@ def render_basics():
         with c_db:
             st.markdown("#### 💾 Database Table")
             df = pd.DataFrame(rel, columns=["Attribute_A", "Attribute_B"]); df.index += 1
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
             st.markdown("""<div class='highlight-box'>Math <span class='math-tag'>Ordered Pair (a,b)</span> = DB <span class='db-tag'>Tuple (Row)</span></div>""", unsafe_allow_html=True)
             st.markdown("### 🧪 Quick Check")
             q1 = st.radio(
-                "In relation matrix M, what does M[i,j]=1 mean? (v_i=row node, v_j=column node)",
+                "In relation matrix M, what does M[i,j]=1 mean? (row node = v_i, column node = v_j)",
                 ["There is a direct relation from v_i to v_j", "v_i equals v_j", "v_j must be larger than v_i"],
                 key="qc_basics_1"
             )
@@ -269,7 +269,7 @@ def render_modeling():
     
     with st.expander("🕸️ Define Graph Nodes (Set V)", expanded=True):
         c1, c2 = st.columns([1, 2])
-        nodes = parse_set_input(c1.text_input("Vertices V (e.g. 1, 2, 3, 4)", "1, 2, 3, 4"))
+        nodes = parse_set_input(c1.text_input("Nodes V (e.g. 1, 2, 3, 4)", "1, 2, 3, 4"))
         rule = c2.selectbox("Edge Rule (on V × V)", [
             "Immediate Predecessor (a = b - 1)", "Divides (a | b)", 
             "Less Than (a < b)", "Greater Than (a > b)", 
@@ -314,7 +314,7 @@ def render_modeling():
         with col2:
             st.markdown("#### 🔢 Adjacency Matrix")
             df_mat = pd.DataFrame(matrix, columns=nodes, index=nodes)
-            st.dataframe(df_mat.style.highlight_max(axis=None, color="#d1e7dd"), use_container_width=True)
+            st.dataframe(df_mat.style.highlight_max(axis=None, color="#d1e7dd"), width="stretch")
             # Pedagogical mapping note
             st.caption("Matrix entry M[i,j] = 1 exactly when (v_i, v_j) is in R.")
 
@@ -382,10 +382,10 @@ def render_modeling():
         col_mk, col_plus = st.columns(2)
         with col_mk:
             st.markdown(f"#### M^{k} (exactly {k} steps)")
-            st.dataframe(pd.DataFrame(mk, index=base_nodes, columns=base_nodes), use_container_width=True)
+            st.dataframe(pd.DataFrame(mk, index=base_nodes, columns=base_nodes), width="stretch")
         with col_plus:
             st.markdown("#### M⁺ (transitive closure)")
-            st.dataframe(pd.DataFrame(m_plus, index=base_nodes, columns=base_nodes), use_container_width=True)
+            st.dataframe(pd.DataFrame(m_plus, index=base_nodes, columns=base_nodes), width="stretch")
 
         if show_steps:
             st.markdown("#### Step-by-step powers")
@@ -394,7 +394,7 @@ def render_modeling():
                 if i > 1:
                     cur = boolean_matmul(cur, (base_matrix > 0).astype(int))
                 st.markdown(f"M^{i}")
-                st.dataframe(pd.DataFrame(cur, index=base_nodes, columns=base_nodes), use_container_width=True)
+                st.dataframe(pd.DataFrame(cur, index=base_nodes, columns=base_nodes), width="stretch")
 
         # interaction prompts
         st.markdown("### 🎯 Try-it Prompts")
@@ -442,7 +442,7 @@ def render_modeling():
             new_m, _ = get_matrix(base_nodes, new_edges)
             new_plus = compute_transitive_closure(new_m)
             diff = ((new_plus == 1) & (m_plus == 0)).astype(int)
-            st.dataframe(pd.DataFrame(diff, index=base_nodes, columns=base_nodes), use_container_width=True)
+            st.dataframe(pd.DataFrame(diff, index=base_nodes, columns=base_nodes), width="stretch")
             st.caption("Cells with 1 are newly reachable pairs after adding the edge.")
 
 # --- Tab 3: Operations (Smart Display Applied) ---
@@ -491,7 +491,7 @@ def render_operations():
 
         with st.expander("🧩 Choose V, R, and S", expanded=True):
             c1, c2, c3 = st.columns([1, 1, 1])
-            V = parse_set_input(c1.text_input("Vertices V (e.g. 1,2,3,4)", "1, 2, 3, 4", key="comp_v"))
+            V = parse_set_input(c1.text_input("Nodes V (e.g. 1,2,3,4)", "1, 2, 3, 4", key="comp_v"))
             rule_R = c2.selectbox("Rule for R", [
                 "Immediate Predecessor (a = b - 1)", "Divides (a | b)", "Less Than (a < b)", 
                 "Greater Than (a > b)", "Equal (a = b)", "Same Parity (a % 2 == b % 2)"
@@ -522,14 +522,14 @@ def render_operations():
             col_m1, col_m2, col_m3 = st.columns(3)
             with col_m1:
                 st.markdown("#### M(R)")
-                st.dataframe(pd.DataFrame(M_R, index=V, columns=V), use_container_width=True)
+                st.dataframe(pd.DataFrame(M_R, index=V, columns=V), width="stretch")
             with col_m2:
                 st.markdown("#### M(S)")
-                st.dataframe(pd.DataFrame(M_S, index=V, columns=V), use_container_width=True)
+                st.dataframe(pd.DataFrame(M_S, index=V, columns=V), width="stretch")
             with col_m3:
                 st.markdown("#### M(S ∘ R)")
                 st.caption("Boolean Product: (M(R) · M(S)) > 0")
-                st.dataframe(pd.DataFrame(M_SoR_from_mats, index=V, columns=V), use_container_width=True)
+                st.dataframe(pd.DataFrame(M_SoR_from_mats, index=V, columns=V), width="stretch")
 
             if np.array_equal(M_SoR_rel, M_SoR_from_mats):
                 st.success("✅ Match: Definition-based S∘R equals booleanized matrix product M(R)·M(S).")
@@ -549,7 +549,7 @@ def render_operations():
                 st.write(f"**Middle node(s) y that make it work:** {', '.join(map(str, ys))}")
                 support_rows = []
                 for y in ys: support_rows.append({"(x,y) in R": f"({x_choice},{y})", "(y,z) in S": f"({y},{z_choice})"})
-                st.dataframe(pd.DataFrame(support_rows), use_container_width=True)
+                st.dataframe(pd.DataFrame(support_rows), width="stretch")
             else:
                 if (x_choice, z_choice) in set(SoR): st.warning("It seems reachable, but no witness y was found.")
                 else: st.error(f"❌ No. ({x_choice}, {z_choice}) is NOT in S ∘ R.")
