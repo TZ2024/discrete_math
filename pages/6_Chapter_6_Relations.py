@@ -270,7 +270,7 @@ def render_modeling():
     with st.expander("🕸️ Define Graph Nodes (Set V)", expanded=True):
         c1, c2 = st.columns([1, 2])
         nodes = parse_set_input(c1.text_input("Nodes V (e.g. 1, 2, 3, 4)", "1, 2, 3, 4"))
-        rule = c2.selectbox("Edge Rule (on V × V)", [
+        rule = c2.selectbox("Relation Rule on $V\times V$", [
             "Immediate Predecessor (a = b - 1)", "Divides (a | b)", 
             "Less Than (a < b)", "Greater Than (a > b)", 
             "Equal (a = b)", "Same Parity (a % 2 == b % 2)"
@@ -296,7 +296,7 @@ def render_modeling():
         st.divider()
         display_relation_smart(
             edges, 
-            "Relation R on V × V (Ordered Pairs)", 
+            "Relation $R\subseteq V\times V$ (ordered pairs)", 
             prefix=r"R =", 
             max_latex=25
         )
@@ -364,7 +364,7 @@ def render_modeling():
                 default=[k for k in list(default_flights.keys())[:min(5, len(default_flights))]],
             )
             base_edges = [default_flights[k] for k in chosen if default_flights[k][0] in base_nodes and default_flights[k][1] in base_nodes]
-            st.caption("$R^2$ means reachable in 2 flights (one layover). $M^+$ means reachable with any number of flights.")
+            st.caption("For this example, $R^2$ means reachable in 2 flights (one layover), and $M_R^+$ means reachable in any finite number of flights.")
 
         base_matrix, _ = get_matrix(base_nodes, base_edges)
         if len(base_nodes) < 2:
