@@ -706,17 +706,93 @@ def render_applications():
             else:
                 st.error("Not correct. This relation is reflexive, symmetric, and transitive.")
 
+
+def render_practice_checker():
+    st.subheader("5. Practice Auto-Checker")
+    st.markdown("提交答案后可即时判分，并给出简短解释。")
+
+    score = 0
+    total = 4
+
+    st.markdown("### Q1. Relation Composition")
+    q1 = st.radio(
+        "For relations R and S on a set, which statement is correct?",
+        [
+            "(x,z) ∈ S∘R iff there exists y with xRy and ySz",
+            "(x,z) ∈ S∘R iff xSz and zRy",
+            "S∘R always equals R∘S"
+        ],
+        key="pc_q1"
+    )
+    if q1 == "(x,z) ∈ S∘R iff there exists y with xRy and ySz":
+        score += 1
+
+    st.markdown("### Q2. Adjacency Matrix")
+    q2 = st.radio(
+        "In adjacency matrix M_R, what does (M_R)_{ij}=1 mean?",
+        [
+            "(v_i,v_j) is in R",
+            "v_i = v_j",
+            "v_j must be larger than v_i"
+        ],
+        key="pc_q2"
+    )
+    if q2 == "(v_i,v_j) is in R":
+        score += 1
+
+    st.markdown("### Q3. Transitive Closure")
+    q3 = st.radio(
+        "Which expression represents transitive closure on finite |V|=n?",
+        [
+            "M_R^+ = M_R ∨ (M_R)^2 ∨ ... ∨ (M_R)^(n-1)",
+            "M_R^+ = (M_R)^n only",
+            "M_R^+ = M_R + I"
+        ],
+        key="pc_q3"
+    )
+    if q3 == "M_R^+ = M_R ∨ (M_R)^2 ∨ ... ∨ (M_R)^(n-1)":
+        score += 1
+
+    st.markdown("### Q4. Topological Order")
+    q4 = st.radio(
+        "When does a directed graph have a topological ordering?",
+        [
+            "Exactly when it is acyclic (DAG)",
+            "Every directed graph has one",
+            "Only complete graphs have one"
+        ],
+        key="pc_q4"
+    )
+    if q4 == "Exactly when it is acyclic (DAG)":
+        score += 1
+
+    if st.button("Submit & Auto-Check", key="pc_submit"):
+        st.markdown(f"## Score: {score}/{total}")
+        if score == total:
+            st.success("Excellent. All answers are correct.")
+        elif score >= 3:
+            st.info("Good job. Review one concept and try again.")
+        else:
+            st.warning("Keep going. Revisit Theory Notes and retry.")
+
+        with st.expander("Answer Key & Explanations"):
+            st.markdown("1) Composition uses an intermediate witness y.")
+            st.markdown("2) Matrix entry 1 means the ordered pair is in the relation.")
+            st.markdown("3) Closure is the OR-union of powers up to n-1 on finite sets.")
+            st.markdown("4) Topological order exists iff no directed cycle exists.")
+
 # ==========================================
 # 4. 主程序入口
 # ==========================================
 def main():
     st.title("Chapter 6: Relations")
-    tabs = st.tabs(["Overview", "1. Basics (The Bridge)", "2. Modeling (Graph/Matrix)", "3. Operations (Logic/DB)", "4. Applications (Real-world)"])
+    tabs = st.tabs(["Overview", "1. Basics (The Bridge)", "2. Modeling (Graph/Matrix)", "3. Operations (Logic/DB)", "4. Applications (Real-world)", "5. Practice Auto-Checker"])
     with tabs[0]: render_overview()
     with tabs[1]: render_basics()
     with tabs[2]: render_modeling()
     with tabs[3]: render_operations()
     with tabs[4]: render_applications()
+    with tabs[5]: render_practice_checker()
 
 if __name__ == "__main__":
     main()
