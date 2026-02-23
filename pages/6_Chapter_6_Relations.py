@@ -661,7 +661,24 @@ def render_applications():
             sorted_plan = topological_sort(nodes_now, edges_now)
             if sorted_plan:
                 st.success(f"✅ One valid topological order: {' → '.join(sorted_plan)}")
-                st.caption("Note: there may be multiple valid answers.")
+                st.caption("Topological order is a valid sequence, not a Hamiltonian path in the original graph. So the graph edges may not form one straight chain.")
+
+                st.markdown("#### Sequence view of this topological order")
+                order_g = graphviz.Digraph()
+                order_g.attr(rankdir='LR')
+                for n in sorted_plan:
+                    order_g.node(n, style='filled', fillcolor='#e8f5e9')
+                for i in range(len(sorted_plan)-1):
+                    order_g.edge(sorted_plan[i], sorted_plan[i+1], color='#43a047')
+                st.graphviz_chart(order_g)
+
+                st.markdown("#### Why this order is valid")
+                pos = {n:i for i,n in enumerate(sorted_plan)}
+                viol = [(u,v) for (u,v) in edges_now if pos[u] > pos[v]]
+                if not viol:
+                    st.info("All prerequisite edges go from left to right in the sequence (no precedence violations).")
+                else:
+                    st.error(f"Found precedence violations: {viol}")
             else:
                 st.error("⛔ Cycle detected, no topological order exists.")
 
