@@ -282,7 +282,7 @@ def render_modeling():
     matrix, _ = get_matrix(nodes, edges)
     props = check_properties(nodes, edges)
 
-    tab_rep, tab_tc = st.tabs(["📊 Representations & Properties", "🧪 Transitive Closure Lab (M^k → M^+)"])
+    tab_rep, tab_tc = st.tabs(["📊 Representations & Properties", "🧪 Transitive Closure Lab ($M^k \to M^+$)"])
 
     with tab_rep:
         st.markdown("### 🔍 Analysis: Properties")
@@ -320,13 +320,13 @@ def render_modeling():
 
     with tab_tc:
         st.markdown("### 🧬 Transitive Closure Explorer")
-        st.markdown("Use this lab to compare **exactly k-step reachability** (M^k) vs **overall reachability** (M^+).")
+        st.markdown("Use this lab to compare **exactly k-step reachability** ($M^k$) vs **overall reachability** ($M^+$).")
         with st.expander("📘 Theory Notes"):
             st.markdown("""
             - **Adjacency matrix**: `M[i,j]=1` iff there is a direct edge from `v_i` to `v_j`.
             - **Boolean product**: `(A⊙B)[i,j] = OR_k (A[i,k] AND B[k,j])`.
-            - **Power**: `M^k` encodes reachability by **exactly** `k` steps.
-            - **Transitive closure**: `M^+ = M ∨ M^2 ∨ ... ∨ M^(n-1)` for finite `n` nodes.
+            - **Power**: $M^k$ encodes reachability by **exactly** $k$ steps.
+            - **Transitive closure**: $M^+ = M \vee M^2 \vee \cdots \vee M^{n-1}$ for finite $n$ nodes.
             - We compute closure with iterative boolean powers (equivalent to reachability semantics).
             """)
 
@@ -364,7 +364,7 @@ def render_modeling():
                 default=[k for k in list(default_flights.keys())[:min(5, len(default_flights))]],
             )
             base_edges = [default_flights[k] for k in chosen if default_flights[k][0] in base_nodes and default_flights[k][1] in base_nodes]
-            st.caption("R² means reachable in 2 flights (one layover). M^+ means reachable with any number of flights.")
+            st.caption("$R^2$ means reachable in 2 flights (one layover). $M^+$ means reachable with any number of flights.")
 
         base_matrix, _ = get_matrix(base_nodes, base_edges)
         if len(base_nodes) < 2:
@@ -374,17 +374,17 @@ def render_modeling():
         display_relation_smart(base_edges, "Base Relation R", prefix=r"R =", max_latex=25)
 
         show_steps = st.checkbox("Show steps (M¹, M², ..., up to n-1)", value=False)
-        k = st.slider("Power k (show M^k)", 1, max(1, len(base_nodes) - 1), 1)
+        k = st.slider("Power k (show $M^k$)", 1, max(1, len(base_nodes) - 1), 1)
 
         mk = matrix_power(base_matrix, k)
         m_plus = compute_transitive_closure(base_matrix)
 
         col_mk, col_plus = st.columns(2)
         with col_mk:
-            st.markdown(f"#### M^{k} (exactly {k} steps)")
+            st.markdown(f"#### $M^{{{k}}}$ (exactly {k} steps)")
             st.dataframe(pd.DataFrame(mk, index=base_nodes, columns=base_nodes), width="stretch")
         with col_plus:
-            st.markdown("#### M⁺ (transitive closure)")
+            st.markdown("#### $M^+$ (transitive closure)")
             st.dataframe(pd.DataFrame(m_plus, index=base_nodes, columns=base_nodes), width="stretch")
 
         if show_steps:
@@ -393,7 +393,7 @@ def render_modeling():
             for i in range(1, len(base_nodes)):
                 if i > 1:
                     cur = boolean_matmul(cur, (base_matrix > 0).astype(int))
-                st.markdown(f"M^{i}")
+                st.markdown(f"$M^{{{i}}}$")
                 st.dataframe(pd.DataFrame(cur, index=base_nodes, columns=base_nodes), width="stretch")
 
         # interaction prompts
@@ -401,7 +401,7 @@ def render_modeling():
         p1, p2, p3 = st.columns([1, 1, 2])
         s_node = p1.selectbox("Start", base_nodes, key="s_node_tc")
         e_node = p2.selectbox("End", base_nodes, index=min(1, len(base_nodes)-1), key="e_node_tc")
-        guess = p3.radio("Predict reachability in M^+", ["Reachable", "Not reachable"], horizontal=True, key="guess_tc")
+        guess = p3.radio("Predict reachability in $M^+$", ["Reachable", "Not reachable"], horizontal=True, key="guess_tc")
 
         idx_s, idx_e = base_nodes.index(s_node), base_nodes.index(e_node)
         reachable = (m_plus[idx_s][idx_e] == 1)
@@ -413,7 +413,7 @@ def render_modeling():
                 if path:
                     st.caption("Witness path: " + " → ".join(map(str, path)))
 
-        # stabilization question (for closure union C_k = M ∨ ... ∨ M^k)
+        # stabilization question (for closure union $C_k = M \vee \cdots \vee M^k$)
         closure_prev = np.zeros_like(base_matrix)
         closure_cur = np.zeros_like(base_matrix)
         stabilize_at = len(base_nodes)
@@ -425,7 +425,7 @@ def render_modeling():
                 break
             closure_prev = closure_cur.copy()
 
-        guess_step = st.slider("Guess when closure C_k stabilizes", 1, len(base_nodes), 2, key="guess_stable")
+        guess_step = st.slider("Guess when closure $C_k$ stabilizes", 1, len(base_nodes), 2, key="guess_stable")
         if st.button("Check Stabilization", key="check_stable"):
             if guess_step == stabilize_at:
                 st.success(f"✅ Correct, closure stabilization starts at k={stabilize_at}.")
@@ -487,7 +487,7 @@ def render_operations():
         st.markdown("**Idea:** Composition creates new connections through an intermediate node.")
         st.latex(r"xRy \land ySz \Rightarrow x(S \circ R)z")
         st.latex(r"(x,z)\in(S\circ R)\iff \exists y\,(xRy \land ySz)")
-        st.caption("Matrix connection: adjacency matrices satisfy  M(S∘R) = M(R) · M(S)  (booleanized).")
+        st.caption("Matrix connection: adjacency matrices satisfy $M(S\circ R)=M(R)\cdot M(S)$ (booleanized).")
 
         with st.expander("🧩 Choose V, R, and S", expanded=True):
             c1, c2, c3 = st.columns([1, 1, 1])
@@ -521,18 +521,18 @@ def render_operations():
             st.divider()
             col_m1, col_m2, col_m3 = st.columns(3)
             with col_m1:
-                st.markdown("#### M(R)")
+                st.markdown("#### $M(R)$")
                 st.dataframe(pd.DataFrame(M_R, index=V, columns=V), width="stretch")
             with col_m2:
-                st.markdown("#### M(S)")
+                st.markdown("#### $M(S)$")
                 st.dataframe(pd.DataFrame(M_S, index=V, columns=V), width="stretch")
             with col_m3:
-                st.markdown("#### M(S ∘ R)")
-                st.caption("Boolean Product: (M(R) · M(S)) > 0")
+                st.markdown("#### $M(S \circ R)$")
+                st.caption("Boolean Product: $\,(M(R)\cdot M(S))>0$")
                 st.dataframe(pd.DataFrame(M_SoR_from_mats, index=V, columns=V), width="stretch")
 
             if np.array_equal(M_SoR_rel, M_SoR_from_mats):
-                st.success("✅ Match: Definition-based S∘R equals booleanized matrix product M(R)·M(S).")
+                st.success("✅ Match: definition-based $S\circ R$ equals booleanized matrix product $M(R)\cdot M(S)$.")
                 st.caption("Why: composition requires an intermediate y with xRy and ySz, exactly what boolean multiplication aggregates.")
             else:
                 st.warning("⚠️ Mismatch detected. Check definitions.")
@@ -545,14 +545,14 @@ def render_operations():
             z_choice = w2.selectbox("Choose z (end)", V, key="witness_z")
             ys = witness_middle_nodes(x_choice, z_choice, R, S)
             if ys:
-                st.success(f"✅ Yes. ({x_choice}, {z_choice}) is in S ∘ R.")
+                st.success(f"✅ Yes. ({x_choice}, {z_choice}) is in $S\circ R$.")
                 st.write(f"**Middle node(s) y that make it work:** {', '.join(map(str, ys))}")
                 support_rows = []
                 for y in ys: support_rows.append({"(x,y) in R": f"({x_choice},{y})", "(y,z) in S": f"({y},{z_choice})"})
                 st.dataframe(pd.DataFrame(support_rows), width="stretch")
             else:
                 if (x_choice, z_choice) in set(SoR): st.warning("It seems reachable, but no witness y was found.")
-                else: st.error(f"❌ No. ({x_choice}, {z_choice}) is NOT in S ∘ R.")
+                else: st.error(f"❌ No. ({x_choice}, {z_choice}) is NOT in $S\circ R$.")
 
             st.markdown("### 🧪 Quick Check")
             q_comp = st.radio(
