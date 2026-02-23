@@ -322,13 +322,13 @@ def render_modeling():
         st.markdown("### 🧬 Transitive Closure Explorer")
         st.markdown("Use this lab to compare **exactly k-step reachability** ($M^k$) vs **overall reachability** ($M^+$).")
         with st.expander("📘 Theory Notes"):
-            st.markdown("""
-            - **Adjacency matrix**: `M[i,j]=1` iff there is a direct edge from `v_i` to `v_j`.
-            - **Boolean product**: `(A⊙B)[i,j] = OR_k (A[i,k] AND B[k,j])`.
-            - **Power**: $M^k$ encodes reachability by **exactly** $k$ steps.
-            - **Transitive closure**: $M^+ = M \vee M^2 \vee \cdots \vee M^{n-1}$ for finite $n$ nodes.
-            - We compute closure with iterative boolean powers (equivalent to reachability semantics).
-            """)
+            st.markdown("**Formal definitions**")
+            st.latex(r"R \subseteq V \times V")
+            st.latex(r"(M_R)_{ij}=1 \iff (v_i,v_j)\in R")
+            st.latex(r"(A\odot B)_{ij}=\bigvee_k\,(A_{ik}\wedge B_{kj})")
+            st.latex(r"(M_R)^k\text{ represents reachability by exactly }k\text{ steps}")
+            st.latex(r"M_R^+=M_R\vee(M_R)^2\vee\cdots\vee(M_R)^{n-1},\ \ |V|=n")
+            st.caption("The app computes transitive closure via iterative Boolean powers.")
 
         example_mode = st.radio(
             "Choose example",
@@ -343,7 +343,7 @@ def render_modeling():
             n_pred = st.slider("Set size n (A={1..n})", 3, 12, min(8, max(3, len(nodes))))
             base_nodes = list(range(1, n_pred + 1))
             base_edges = [(a, b) for a in base_nodes for b in base_nodes if a == b - 1]
-            st.caption("R = {(a,b) | a = b - 1}. Then R² captures distance-2 reachability.")
+            st.caption("$R^2$ means distance-2 reachability in this predecessor relation.")
 
         elif example_mode == "Flights Between Cities":
             city_pool = ["Detroit", "Chicago", "NewYork", "Boston", "Seattle", "Austin", "Denver", "Miami"]
@@ -364,7 +364,7 @@ def render_modeling():
                 default=[k for k in list(default_flights.keys())[:min(5, len(default_flights))]],
             )
             base_edges = [default_flights[k] for k in chosen if default_flights[k][0] in base_nodes and default_flights[k][1] in base_nodes]
-            st.caption("For this example, $R^2$ means reachable in 2 flights (one layover), and $M_R^+$ means reachable in any finite number of flights.")
+            st.caption("For this example, $R^2$ means reachable in 2 flights, and $M_R^+$ means reachable in any finite number of flights.")
 
         base_matrix, _ = get_matrix(base_nodes, base_edges)
         if len(base_nodes) < 2:
@@ -396,7 +396,6 @@ def render_modeling():
                 st.markdown(f"$M^{{{i}}}$")
                 st.dataframe(pd.DataFrame(cur, index=base_nodes, columns=base_nodes), width="stretch")
 
-        # interaction prompts
         st.markdown("### 🎯 Try-it Prompts")
         p1, p2, p3 = st.columns([1, 1, 2])
         s_node = p1.selectbox("Start", base_nodes, key="s_node_tc")
@@ -413,7 +412,6 @@ def render_modeling():
                 if path:
                     st.caption("Witness path: " + " → ".join(map(str, path)))
 
-        # stabilization question (for closure union $C_k = M \vee \cdots \vee M^k$)
         closure_prev = np.zeros_like(base_matrix)
         closure_cur = np.zeros_like(base_matrix)
         stabilize_at = len(base_nodes)
@@ -432,7 +430,6 @@ def render_modeling():
             else:
                 st.info(f"Close. For this graph, closure stabilization starts at k={stabilize_at}.")
 
-        # add-one-edge impact
         st.markdown("#### Add one extra edge and compare closure")
         a_col, b_col = st.columns(2)
         add_u = a_col.selectbox("From", base_nodes, key="add_u")
