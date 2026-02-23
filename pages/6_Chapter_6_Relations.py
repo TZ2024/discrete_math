@@ -322,13 +322,22 @@ def render_modeling():
         st.markdown("### 🧬 Transitive Closure Explorer")
         st.markdown("Use this lab to compare **exactly k-step reachability** ($M^k$) vs **overall reachability** ($M^+$).")
         with st.expander("📘 Theory Notes"):
-            st.markdown("**Formal definitions**")
+            st.markdown("**1) Relation and matrix definitions**")
             st.latex(r"R \subseteq V \times V")
             st.latex(r"(M_R)_{ij}=1 \iff (v_i,v_j)\in R")
+            st.caption("Interpretation: matrix entry (i,j)=1 means there is a direct relation from node v_i to node v_j.")
+
+            st.markdown("**2) Boolean product and powers**")
             st.latex(r"(A\odot B)_{ij}=\bigvee_k\,(A_{ik}\wedge B_{kj})")
             st.latex(r"(M_R)^k\text{ represents reachability by exactly }k\text{ steps}")
+            st.caption("So if ((M_R)^k)_{ij}=1, then v_j is reachable from v_i using exactly k edges.")
+
+            st.markdown("**3) Transitive closure**")
             st.latex(r"M_R^+=M_R\vee(M_R)^2\vee\cdots\vee(M_R)^{n-1},\ \ |V|=n")
-            st.caption("The app computes transitive closure via iterative Boolean powers.")
+            st.caption("Closure view: (M_R^+)_{ij}=1 iff there exists a path from v_i to v_j with some finite length.")
+
+            st.markdown("**4) Why this lab matters**")
+            st.caption("This connects relations, digraphs, and matrix operations into one computational view used in CS (reachability, dependency analysis, routing).")
 
         example_mode = st.radio(
             "Choose example",
