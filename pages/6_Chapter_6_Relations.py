@@ -626,36 +626,36 @@ def render_applications():
             except:
                 pass
 
-        with st.expander("🛠️ Edit prerequisite graph", expanded=False):
-            c_add1, c_add2 = st.columns([1, 1])
-            from_node = c_add1.selectbox("Add edge: from", nodes_now, key="edge_from")
-            to_node = c_add2.selectbox("to", nodes_now, index=min(1, len(nodes_now)-1), key="edge_to")
+        st.markdown("#### 🛠️ Edit prerequisite graph")
+        c_add1, c_add2 = st.columns([1, 1])
+        from_node = c_add1.selectbox("Add edge: from", nodes_now, key="edge_from")
+        to_node = c_add2.selectbox("to", nodes_now, index=min(1, len(nodes_now)-1), key="edge_to")
 
-            c_act1, c_act2, c_act3 = st.columns([1, 1, 1])
-            if c_act1.button("Add edge", key="btn_add_edge"):
-                candidate = (from_node, to_node)
-                if candidate in edges_now:
-                    st.warning("Edge already exists.")
+        c_act1, c_act2, c_act3 = st.columns([1, 1, 1])
+        if c_act1.button("Add edge", key="btn_add_edge"):
+            candidate = (from_node, to_node)
+            if candidate in edges_now:
+                st.warning("Edge already exists.")
+            else:
+                trial = edges_now + [candidate]
+                if has_cycle(nodes_now, trial):
+                    st.error("Cycle detected, no topological order exists. Edge not added.")
                 else:
-                    trial = edges_now + [candidate]
-                    if has_cycle(nodes_now, trial):
-                        st.error("Cycle detected, no topological order exists. Edge not added.")
-                    else:
-                        st.session_state.sched_history.append(edges_now.copy())
-                        st.session_state.sched_edges = trial
-                        st.success(f"Added edge: {from_node} → {to_node}")
+                    st.session_state.sched_history.append(edges_now.copy())
+                    st.session_state.sched_edges = trial
+                    st.success(f"Added edge: {from_node} → {to_node}")
 
-            if c_act2.button("Undo last edge", key="btn_undo"):
-                if st.session_state.sched_history:
-                    st.session_state.sched_edges = st.session_state.sched_history.pop()
-                    st.info("Undid last change.")
-                else:
-                    st.warning("Nothing to undo.")
+        if c_act2.button("Undo last edge", key="btn_undo"):
+            if st.session_state.sched_history:
+                st.session_state.sched_edges = st.session_state.sched_history.pop()
+                st.info("Undid last change.")
+            else:
+                st.warning("Nothing to undo.")
 
-            if c_act3.button("Reset to default graph", key="btn_reset"):
-                st.session_state.sched_edges = default_edges.copy()
-                st.session_state.sched_history = []
-                st.success("Reset to default acyclic graph.")
+        if c_act3.button("Reset to default graph", key="btn_reset"):
+            st.session_state.sched_edges = default_edges.copy()
+            st.session_state.sched_history = []
+            st.success("Reset to default acyclic graph.")
 
         if st.button("🚀 Run Topological Sort", key="run_topo"):
             sorted_plan = topological_sort(nodes_now, edges_now)
