@@ -266,7 +266,6 @@ def render_basics():
 # --- Tab 2: Modeling (Smart Display Applied) ---
 def render_modeling():
     st.subheader("2. Modeling: Properties, Graphs & Matrices")
-    instructor_mode = st.sidebar.checkbox("Instructor Mode (advanced hints)", value=False, key="instr_mode_ch6")
     
     with st.expander("🕸️ Define Graph Nodes (Set V)", expanded=True):
         c1, c2 = st.columns([1, 2])
@@ -351,8 +350,7 @@ def render_modeling():
 
         if example_mode == "Current Rule on V" and len(base_nodes) > 15:
             st.warning("⚠️ Large V detected. For smooth in-class demos, we recommend n ≤ 15 in the closure lab.")
-            if instructor_mode:
-                st.caption("Reason: closure and stabilization use repeated boolean matrix multiplications; capping V keeps demos responsive.")
+            st.caption("Reason: closure and stabilization use repeated boolean matrix multiplications; capping V keeps demos responsive.")
             soft_cap = st.checkbox("Use soft cap for closure demo (first 15 nodes)", value=True, key="tc_soft_cap")
             if soft_cap:
                 base_nodes = base_nodes[:15]
@@ -363,8 +361,7 @@ def render_modeling():
             n_pred = st.slider("Set size n (A={1..n})", 3, 12, min(8, max(3, len(nodes))))
             base_nodes = list(range(1, n_pred + 1))
             base_edges = [(a, b) for a in base_nodes for b in base_nodes if a == b - 1]
-            if instructor_mode:
-                st.caption("$R^k$ corresponds to distance-$k$ reachability; on $\{1..n\}$, $a$ reaches $b$ in $k$ steps iff $a=b-k$.")
+            st.caption("$R^k$ corresponds to distance-$k$ reachability; on $\{1..n\}$, $a$ reaches $b$ in $k$ steps iff $a=b-k$.")
 
         elif example_mode == "Flights Between Cities":
             city_pool = ["Detroit", "Chicago", "NewYork", "Boston", "Seattle", "Austin", "Denver", "Miami"]
@@ -394,19 +391,18 @@ def render_modeling():
 
         display_relation_smart(base_edges, "Base Relation R", prefix=r"R =", max_latex=25)
 
-        if instructor_mode:
-            with st.expander("🕸️ Show graph for this closure example"):
-                try:
-                    g_tc = graphviz.Digraph(format='png')
-                    g_tc.attr(rankdir='LR')
-                    for n in base_nodes:
-                        g_tc.node(str(n))
-                    for u, v in base_edges:
-                        g_tc.edge(str(u), str(v))
-                    st.graphviz_chart(g_tc)
-                    st.caption("Use this graph to visually match edges with 1s in $M$, $M^k$, and $M^+$." )
-                except Exception:
-                    st.info("Graph view unavailable in this environment.")
+        with st.expander("🕸️ Show graph for this closure example"):
+            try:
+                g_tc = graphviz.Digraph(format='png')
+                g_tc.attr(rankdir='LR')
+                for n in base_nodes:
+                    g_tc.node(str(n))
+                for u, v in base_edges:
+                    g_tc.edge(str(u), str(v))
+                st.graphviz_chart(g_tc)
+                st.caption("Use this graph to visually match edges with 1s in $M$, $M^k$, and $M^+$." )
+            except Exception:
+                st.info("Graph view unavailable in this environment.")
 
         show_steps = st.checkbox("Show steps (M¹, M², ..., up to n-1)", value=False)
         k = st.slider("Power k (show $M^k$)", 1, max(1, len(base_nodes) - 1), 1)
