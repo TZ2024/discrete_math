@@ -348,6 +348,14 @@ def render_modeling():
         base_nodes = nodes
         base_edges = edges
 
+        if example_mode == "Current Rule on V" and len(base_nodes) > 15:
+            st.warning("⚠️ Large V detected. For smooth in-class demos, we recommend n ≤ 15 in the closure lab.")
+            soft_cap = st.checkbox("Use soft cap for closure demo (first 15 nodes)", value=True, key="tc_soft_cap")
+            if soft_cap:
+                base_nodes = base_nodes[:15]
+                base_edges = [(u, v) for (u, v) in base_edges if u in base_nodes and v in base_nodes]
+                st.caption(f"Using first {len(base_nodes)} nodes for Transitive Closure Explorer.")
+
         if example_mode == "Predecessor Relation":
             n_pred = st.slider("Set size n (A={1..n})", 3, 12, min(8, max(3, len(nodes))))
             base_nodes = list(range(1, n_pred + 1))
@@ -433,6 +441,7 @@ def render_modeling():
             closure_prev = closure_cur.copy()
 
         guess_step = st.slider("Guess when closure $C_k$ stabilizes", 1, len(base_nodes), 2, key="guess_stable")
+        st.caption("Definition used here: stabilization starts at the first k such that $C_k = C_{k-1}$ (no new reachable pairs are added at step k).")
         if st.button("Check Stabilization", key="check_stable"):
             if guess_step == stabilize_at:
                 st.success(f"✅ Correct, closure stabilization starts at k={stabilize_at}.")
