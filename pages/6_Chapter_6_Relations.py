@@ -435,7 +435,7 @@ def render_modeling():
                 if i > 1:
                     cur = boolean_matmul(cur, base_bool)
                 st.markdown(f"$M^{{{i}}}$")
-                st.dataframe(pd.DataFrame(cur, index=base_nodes, columns=base_nodes), use_container_width=True)
+                render_bin_df(cur)
 
         st.markdown("### 🎯 Try-it Prompts")
         p0, p1, p2, p3 = st.columns([1.4, 1, 1, 2])
@@ -462,16 +462,18 @@ def render_modeling():
                 if path:
                     st.caption("Witness path: " + " → ".join(map(str, path)))
 
-        closure_prev = np.zeros_like(base_matrix)
-        closure_cur = np.zeros_like(base_matrix)
+        closure_prev = np.zeros_like(base_bool)
+        closure_cur = np.zeros_like(base_bool)
         stabilize_at = len(base_nodes)
+        pow_iter = base_bool.copy()  # M^1, then iteratively to M^2, M^3, ...
         for i in range(1, len(base_nodes) + 1):
-            mk_i = matrix_power(base_matrix, i)
+            mk_i = pow_iter
             closure_cur = np.logical_or(closure_prev, mk_i).astype(int)
             if np.array_equal(closure_cur, closure_prev):
                 stabilize_at = i
                 break
             closure_prev = closure_cur.copy()
+            pow_iter = boolean_matmul(pow_iter, base_bool)
 
         guess_step = st.slider("Guess when closure $C_k$ stabilizes", 1, len(base_nodes), 2, key="guess_stable")
         st.caption("Definition used here: stabilization starts at the first k such that $C_k = C_{k-1}$ (no new reachable pairs are added at step k).")
@@ -490,7 +492,7 @@ def render_modeling():
             new_m, _ = get_matrix(base_nodes, new_edges)
             new_plus = compute_transitive_closure(new_m)
             diff = ((new_plus == 1) & (m_plus == 0)).astype(int)
-            st.dataframe(pd.DataFrame(diff, index=base_nodes, columns=base_nodes), use_container_width=True)
+            render_bin_df(diff)
             st.caption("Cells with 1 are newly reachable pairs after adding the edge.")
 
 # --- Tab 3: Operations (Smart Display Applied) ---
