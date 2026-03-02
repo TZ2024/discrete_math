@@ -428,17 +428,26 @@ def render_modeling():
                 st.dataframe(pd.DataFrame(cur, index=base_nodes, columns=base_nodes), use_container_width=True)
 
         st.markdown("### 🎯 Try-it Prompts")
-        p1, p2, p3 = st.columns([1, 1, 2])
+        p0, p1, p2, p3 = st.columns([1.4, 1, 1, 2])
+        predict_target = p0.radio("Predict using", ["$M^k$", "$M^+$"], horizontal=True, key="pred_target_tc")
         s_node = p1.selectbox("Start", base_nodes, key="s_node_tc")
         e_node = p2.selectbox("End", base_nodes, index=min(1, len(base_nodes)-1), key="e_node_tc")
-        guess = p3.radio("Predict reachability in $M^+$", ["Reachable", "Not reachable"], horizontal=True, key="guess_tc")
+        guess = p3.radio("Prediction", ["Reachable", "Not reachable"], horizontal=True, key="guess_tc")
 
         idx_s, idx_e = base_nodes.index(s_node), base_nodes.index(e_node)
-        reachable = (m_plus[idx_s][idx_e] == 1)
+        reachable_mk = (mk[idx_s][idx_e] == 1)
+        reachable_mplus = (m_plus[idx_s][idx_e] == 1)
+        reachable = reachable_mk if predict_target == "$M^k$" else reachable_mplus
+
         if st.button("Check Prediction", key="check_pred_tc"):
             ok = (reachable and guess == "Reachable") or ((not reachable) and guess == "Not reachable")
             st.success("✅ Correct." if ok else "❌ Not this time.")
-            if reachable:
+            if predict_target == "$M^k$":
+                st.caption(f"Checked on $M^{{{k}}}$ (exactly {k} steps).")
+            else:
+                st.caption("Checked on $M^+$ (reachability by any finite number of steps).")
+
+            if predict_target == "$M^+$" and reachable:
                 path = find_witness_path(base_nodes, base_edges, s_node, e_node)
                 if path:
                     st.caption("Witness path: " + " → ".join(map(str, path)))
