@@ -408,8 +408,9 @@ def render_modeling():
         highlight_ones = st.checkbox("Highlight 1s", value=False, key="hl_ones_tc")
         k = st.slider("Power k (show $M^k$)", 1, max(1, len(base_nodes) - 1), 1)
 
-        mk = matrix_power(base_matrix, k)
-        m_plus = compute_transitive_closure(base_matrix)
+        base_bool = (base_matrix > 0).astype(int)
+        mk = matrix_power(base_bool, k)
+        m_plus = compute_transitive_closure(base_bool)
 
         def render_bin_df(arr):
             df = pd.DataFrame(arr, index=base_nodes, columns=base_nodes)
@@ -429,10 +430,10 @@ def render_modeling():
 
         if show_steps:
             st.markdown("#### Step-by-step powers")
-            cur = (base_matrix > 0).astype(int)
+            cur = base_bool.copy()
             for i in range(1, len(base_nodes)):
                 if i > 1:
-                    cur = boolean_matmul(cur, (base_matrix > 0).astype(int))
+                    cur = boolean_matmul(cur, base_bool)
                 st.markdown(f"$M^{{{i}}}$")
                 st.dataframe(pd.DataFrame(cur, index=base_nodes, columns=base_nodes), use_container_width=True)
 
