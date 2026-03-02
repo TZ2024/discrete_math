@@ -270,7 +270,7 @@ def render_modeling():
     with st.expander("🕸️ Define Graph Nodes (Set V)", expanded=True):
         c1, c2 = st.columns([1, 2])
         nodes = parse_set_input(c1.text_input("Nodes V (e.g. 1, 2, 3, 4)", "1, 2, 3, 4"))
-        rule = c2.selectbox("Relation Rule on $V\times V$", [
+        rule = c2.selectbox("Relation Rule on $V\\times V$", [
             "Immediate Predecessor (a = b - 1)", "Divides (a | b)", 
             "Less Than (a < b)", "Greater Than (a > b)", 
             "Equal (a = b)", "Same Parity (a % 2 == b % 2)"
@@ -282,7 +282,7 @@ def render_modeling():
     matrix, _ = get_matrix(nodes, edges)
     props = check_properties(nodes, edges)
 
-    tab_rep, tab_tc = st.tabs(["📊 Representations & Properties", "🧪 Transitive Closure Lab ($M^k \to M^+$)"])
+    tab_rep, tab_tc = st.tabs(["📊 Representations & Properties", "🧪 Transitive Closure Lab ($M^k \\to M^+$)"])
 
     with tab_rep:
         st.markdown("### 🔍 Analysis: Properties")
@@ -296,7 +296,7 @@ def render_modeling():
         st.divider()
         display_relation_smart(
             edges, 
-            "Relation $R\subseteq V\times V$ (ordered pairs)", 
+            "Relation $R\\subseteq V\\times V$ (ordered pairs)", 
             prefix=r"R =", 
             max_latex=25
         )
