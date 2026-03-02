@@ -364,13 +364,13 @@ def render_modeling():
             st.caption("$R^k$ corresponds to distance-$k$ reachability; on $\{1..n\}$, $a$ reaches $b$ in $k$ steps iff $a=b-k$.")
 
         elif example_mode == "Flights Between Cities":
-            city_pool = ["Detroit", "Chicago", "NewYork", "Boston", "Seattle", "Austin", "Denver", "Miami"]
+            city_pool = ["Detroit", "Chicago", "New York", "Boston", "Seattle", "Austin", "Denver", "Miami"]
             city_count = st.slider("Number of cities", 5, 8, 6)
             base_nodes = city_pool[:city_count]
             default_flights = {
                 "Detroit→Chicago": ("Detroit", "Chicago"),
-                "Chicago→NewYork": ("Chicago", "NewYork"),
-                "NewYork→Boston": ("NewYork", "Boston"),
+                "Chicago→New York": ("Chicago", "New York"),
+                "New York→Boston": ("New York", "Boston"),
                 "Detroit→Austin": ("Detroit", "Austin"),
                 "Austin→Denver": ("Austin", "Denver"),
                 "Denver→Seattle": ("Denver", "Seattle"),
