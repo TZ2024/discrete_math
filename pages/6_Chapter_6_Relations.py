@@ -333,8 +333,8 @@ def render_modeling():
             st.caption("So if ((M_R)^k)_{ij}=1, then v_j is reachable from v_i using exactly k edges.")
 
             st.markdown("**3) Transitive closure**")
-            st.latex(r"M_R^+=M_R\vee(M_R)^2\vee\cdots\vee(M_R)^{n-1},\ \ |V|=n")
-            st.caption("Closure view: (M_R^+)_{ij}=1 iff there exists a path from v_i to v_j with some finite length.")
+            st.latex(r"M_R^+=M_R\vee(M_R)^2\vee\cdots\vee(M_R)^{n},\ \ |V|=n")
+            st.caption("Strict matrix form (covers self-reachability via cycles): include powers through n. Implementation follows this convention.")
 
             st.markdown("**4) Why this lab matters**")
             st.caption("This connects relations, digraphs, and matrix operations into one computational view used in CS (reachability, dependency analysis, routing).")
