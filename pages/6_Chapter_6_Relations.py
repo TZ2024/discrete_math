@@ -405,18 +405,27 @@ def render_modeling():
                 st.info("Graph view unavailable in this environment.")
 
         show_steps = st.checkbox("Show steps (M¹, M², ..., up to n-1)", value=False)
+        highlight_ones = st.checkbox("Highlight 1s", value=False, key="hl_ones_tc")
         k = st.slider("Power k (show $M^k$)", 1, max(1, len(base_nodes) - 1), 1)
 
         mk = matrix_power(base_matrix, k)
         m_plus = compute_transitive_closure(base_matrix)
 
+        def render_bin_df(arr):
+            df = pd.DataFrame(arr, index=base_nodes, columns=base_nodes)
+            if highlight_ones:
+                sty = df.style.applymap(lambda v: "background-color:#d1e7dd; font-weight:600" if int(v)==1 else "")
+                st.dataframe(sty, use_container_width=True)
+            else:
+                st.dataframe(df, use_container_width=True)
+
         col_mk, col_plus = st.columns(2)
         with col_mk:
             st.markdown(f"#### $M^{{{k}}}$ (exactly {k} steps)")
-            st.dataframe(pd.DataFrame(mk, index=base_nodes, columns=base_nodes), use_container_width=True)
+            render_bin_df(mk)
         with col_plus:
             st.markdown("#### $M^+$ (transitive closure)")
-            st.dataframe(pd.DataFrame(m_plus, index=base_nodes, columns=base_nodes), use_container_width=True)
+            render_bin_df(m_plus)
 
         if show_steps:
             st.markdown("#### Step-by-step powers")
