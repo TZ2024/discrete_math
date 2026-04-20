@@ -5,7 +5,7 @@ import graphviz
 from collections import deque
 
 # ==========================================
-# 1. 页面配置与样式 (保持原有美观设计)
+# 1. Page configuration and styling (original visual design preserved)
 # ==========================================
 st.set_page_config(page_title="Ch 6: Relations & Graphs", layout="wide")
 
@@ -20,11 +20,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. 核心算法库 (Backend Logic)
+# 2. Core algorithm utilities (backend logic)
 # ==========================================
 
 def parse_set_input(input_str):
-    """解析输入并去重排序"""
+    """Parse the input, remove duplicates, and sort the values."""
     try: return sorted(list(set([int(x.strip()) for x in input_str.split(',') if x.strip()])))
     except: return [1, 2, 3, 4]
 
@@ -38,9 +38,9 @@ def format_relation_display(rel):
 
 def display_relation_smart(rel, label, prefix=None, max_latex=25):
     """
-    智能显示关系：
-    - 小于等于 max_latex：LaTeX 数学显示
-    - 超过 max_latex：自动切换为表格，避免页面挤爆
+    Display the relation intelligently:
+    - If the size is at most max_latex, show it in LaTeX math notation
+    - Otherwise, switch to a table automatically to keep the page readable
     """
     st.markdown(f"#### {label}")
 
@@ -196,7 +196,7 @@ def find_witness_path(nodes, edges, start, end):
     return list(reversed(path))
 
 # ==========================================
-# 3. 模块渲染函数
+# 3. Module rendering functions
 # ==========================================
 
 def render_overview():
@@ -769,7 +769,7 @@ def render_applications():
 
 
 # ==========================================
-# 4. 主程序入口
+# 4. Main entry point
 # ==========================================
 def main():
     st.title("Chapter 6: Relations")
